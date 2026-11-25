@@ -28,4 +28,4 @@ Every push to `main` redeploys in about a minute.
 
 ## Things to tweak
 - `public/shared.js` → `CONFIG`: password, which actions need it, undo window, check-in interval.
-- Age-group icons: add `public/assets/icons/youngster.svg` and `public/assets/icons/unc.svg` (upload on github.com). Emoji badges show until then.
+- Age-group icons: `public/assets/icons/youngster.png` and `unc.png`. Replace either file to change it.

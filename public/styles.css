@@ -98,7 +98,7 @@ textarea.input { resize: vertical; }
 .toggle button.on { background: var(--maroon); color: var(--cream); }
 
 /* ---------- age icon slot ---------- */
-.age-icon { width: 26px; height: 26px; object-fit: contain; flex-shrink: 0; }
+.age-icon { width: 34px; height: 34px; object-fit: contain; flex-shrink: 0; }
 .age-badge { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%; font-size: 15px; flex-shrink: 0; }
 .age-badge.age-youngster { background: #fde9b5; }
 .age-badge.age-unc { background: #f1d4c4; }
@@ -203,7 +203,7 @@ body[data-view="clock"] .footer a { color: var(--gold); }
 .lb-row { display: flex; align-items: center; gap: 10px; padding: 10px 8px; border-bottom: 1px dashed var(--gray-lt); font-size: 1.12rem; }
 .lb-row:last-child { border-bottom: 0; }
 .lb-rank { width: 2.1em; height: 2.1em; display: inline-flex; align-items: center; justify-content: center; font-weight: 900; color: var(--maroon); border-radius: 50%; flex-shrink: 0; }
-.lb-icon.age-icon, .lb-icon.age-badge { width: 30px; height: 30px; }
+.lb-icon.age-icon { width: 40px; height: 40px; } .lb-icon.age-badge { width: 30px; height: 30px; }
 .lb-name { font-weight: 700; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .lb-time { font-family: var(--mono); font-variant-numeric: tabular-nums; font-weight: 800; color: var(--ink); }
 .medal-1 .lb-rank { background: linear-gradient(135deg, #f5d77a, var(--gold)); color: #4a3500; box-shadow: 0 0 0 2px #b8922f; }

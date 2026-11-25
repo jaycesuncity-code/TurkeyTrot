@@ -1,4 +1,2 @@
-Drop the age-group icons here as:
-  youngster.svg
-  unc.svg
-The app detects them automatically. Until they exist it shows emoji badges.
+Age-group icons: youngster.png and unc.png (transparent PNG).
+Replace either file to change it. If one is missing the app shows an emoji badge.

@@ -44,7 +44,7 @@ body { margin: 0; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Ari
 .bib-name.blank { width: 70%; border-bottom: 2px solid #bbb; height: 0.45in; }
 .bib-foot { width: 100%; display: flex; justify-content: space-between; align-items: center; margin-top: 0.1in; font-size: 11pt; font-weight: 700; color: var(--maroon); }
 .bib-group { display: flex; align-items: center; gap: 0.08in; font-size: 13pt; }
-.age-icon { width: 0.35in; height: 0.35in; object-fit: contain; }
+.age-icon { width: 0.6in; height: 0.6in; object-fit: contain; }
 .age-badge { display: inline-flex; align-items: center; justify-content: center; width: 0.35in; height: 0.35in; border-radius: 50%; font-size: 14pt; }
 .age-badge.age-youngster { background: #fde9b5; }
 .age-badge.age-unc { background: #f1d4c4; }

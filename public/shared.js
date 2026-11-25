@@ -31,10 +31,10 @@ const CONFIG = {
 };
 
 // ===== Age groups and icon slot =====
-// Drop /assets/icons/youngster.svg and /assets/icons/unc.svg in to replace the emoji badges.
+// Drop /assets/icons/youngster.png and /assets/icons/unc.png in to replace the emoji badges.
 const AGE_GROUPS = {
-  youngster: { label: 'Youngster', emoji: '🐥', file: '/assets/icons/youngster.svg' },
-  unc: { label: 'Unc', emoji: '🧓', file: '/assets/icons/unc.svg' },
+  youngster: { label: 'Youngster', emoji: '🐥', file: '/assets/icons/youngster.png' },
+  unc: { label: 'Unc', emoji: '🧓', file: '/assets/icons/unc.png' },
 };
 const iconAvailable = { youngster: false, unc: false };
 
@@ -44,7 +44,7 @@ async function probeAgeIcons() {
       try {
         const res = await fetch(g.file, { cache: 'no-cache' });
         const type = res.headers.get('content-type') || '';
-        iconAvailable[key] = res.ok && type.includes('svg');
+        iconAvailable[key] = res.ok && type.startsWith('image/');
       } catch {
         iconAvailable[key] = false;
       }
