@@ -96,7 +96,8 @@ function escapeHtml(s) {
 }
 
 function fullName(r) {
-  return `${r.first_name || ''} ${r.last_name || ''}`.trim();
+  const li = String(r.last_name || '').trim().charAt(0).toUpperCase();
+  return `${r.first_name || ''}${li ? ` ${li}.` : ''}`.trim();
 }
 
 // ===== Inline art =====

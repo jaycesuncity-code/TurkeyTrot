@@ -15,7 +15,7 @@ export async function onRequestPatch({ env, params, request }) {
   }
   if ('last_name' in b) {
     sets.push('last_name = ?');
-    vals.push(cleanName(b.last_name));
+    vals.push(cleanName(b.last_name).charAt(0).toUpperCase());
   }
   if ('age_group' in b) {
     const v = cleanAge(b.age_group);

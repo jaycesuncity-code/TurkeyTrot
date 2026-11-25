@@ -17,7 +17,7 @@ export async function onRequestPost({ env, request }) {
   const stmts = [];
   for (const r of input) {
     const first = cleanName(r.first_name);
-    const last = cleanName(r.last_name);
+    const last = cleanName(r.last_name).charAt(0).toUpperCase();
     const age = cleanAge(r.age_group);
     const bib = cleanBib(r.bib);
     if (!first) return bad('Every runner needs a first name');
