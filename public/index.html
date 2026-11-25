@@ -10,10 +10,7 @@
   <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-  <header class="topbar chrome">
-    <a class="brand" href="#/clock"><span class="turkey" data-turkey></span><span>Turkey Trot 5K <span data-year></span></span></a>
-    <span id="netDot" class="net-dot" title="Connection"></span>
-  </header>
+  <span id="netDot" class="net-dot" title="Connection"></span>
 
   <main>
     <!-- CLOCK -->
@@ -24,14 +21,19 @@
         <div class="hold-bar"><div id="holdFill" class="hold-fill"></div></div>
         <div id="clockStatus" class="clock-status">Waiting for the start</div>
       </div>
-      <div class="clock-actions">
-        <a class="btn btn-ghost" href="#/leaderboard">🏆 Leaderboard</a>
-        <button id="raceMenuBtn" class="btn btn-ghost btn-small" aria-label="Race controls">⋯</button>
+      <div class="home-actions">
+        <a class="home-finish" href="#/finish">FINISH</a>
+        <a class="home-runners" href="#/runners">See / Add Runners</a>
+        <div class="home-links">
+          <a href="#/leaderboard">Leaderboard</a>
+          <button id="raceMenuBtn" class="link-btn" aria-label="Race controls">⋯</button>
+        </div>
       </div>
     </section>
 
     <!-- FINISH -->
     <section id="view-finish" class="view" hidden>
+      <a class="back chrome" href="#/clock">‹ Clock</a>
       <button id="finishBtn" class="finish-btn" type="button">
         <span class="finish-word">FINISH</span>
         <span class="finish-clock" data-clock>0:00:00.0</span>
@@ -59,6 +61,7 @@
 
     <!-- RUNNERS -->
     <section id="view-runners" class="view" hidden>
+      <a class="back chrome" href="#/clock">‹ Clock</a>
       <div class="panel">
         <h3 id="runnerFormTitle">Add a runner</h3>
         <form id="runnerForm" class="form" autocomplete="off">
@@ -108,6 +111,7 @@
 
     <!-- LEADERBOARD -->
     <section id="view-leaderboard" class="view" hidden>
+      <a class="back chrome" href="#/clock">‹ Clock</a>
       <div class="lb-controls chrome">
         <div class="chips" id="lbChips">
           <button class="chip on" data-filter="all">All</button>
@@ -137,17 +141,6 @@
       <button id="shotExit" class="shot-exit" type="button" aria-label="Exit screenshot mode">✕</button>
     </section>
   </main>
-
-  <footer class="footer chrome">
-    <a href="https://youknowsuncity.com" target="_blank" rel="noopener">Sun City Plumbing &amp; Heating</a>
-  </footer>
-
-  <nav class="tabbar chrome">
-    <a href="#/clock" data-tab="clock"><span>⏱</span>Clock</a>
-    <a href="#/finish" data-tab="finish"><span>🏁</span>Finish</a>
-    <a href="#/runners" data-tab="runners"><span>🏃</span>Runners</a>
-    <a href="#/leaderboard" data-tab="leaderboard"><span>🏆</span>Leaderboard</a>
-  </nav>
 
   <!-- Countdown overlay (5-4-3-2-1-GO), driven by the shared start time -->
   <div id="countdown" class="countdown" hidden><div id="countdownNum"></div></div>
