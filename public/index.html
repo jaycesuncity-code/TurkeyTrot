@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#6B1A2C">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Turkey Trot 5K · Race Timer</title>
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="topbar chrome">
+    <a class="brand" href="#/clock"><span class="turkey" data-turkey></span><span>Turkey Trot 5K <span data-year></span></span></a>
+    <span id="netDot" class="net-dot" title="Connection"></span>
+  </header>
+
+  <main>
+    <!-- CLOCK -->
+    <section id="view-clock" class="view">
+      <div class="clock-wrap">
+        <div class="clock-label">Race Timer</div>
+        <div id="bigClock" class="big-clock" data-clock>0:00:00.0</div>
+        <div class="hold-bar"><div id="holdFill" class="hold-fill"></div></div>
+        <div id="clockStatus" class="clock-status">Waiting for the start</div>
+      </div>
+      <div class="clock-actions">
+        <a class="btn btn-ghost" href="#/leaderboard">🏆 Leaderboard</a>
+        <button id="raceMenuBtn" class="btn btn-ghost btn-small" aria-label="Race controls">⋯</button>
+      </div>
+    </section>
+
+    <!-- FINISH -->
+    <section id="view-finish" class="view" hidden>
+      <button id="finishBtn" class="finish-btn" type="button">
+        <span class="finish-word">FINISH</span>
+        <span class="finish-clock" data-clock>0:00:00.0</span>
+      </button>
+      <div id="lastStamp" class="last-stamp"></div>
+      <div id="syncStatus" class="sync-status"></div>
+
+      <div class="assign-help">Tap a time and a runner (either order) to match them.</div>
+      <div class="assign-grid">
+        <div class="panel">
+          <h3>Unassigned times <span id="queueCount" class="count"></span></h3>
+          <ul id="stampQueue" class="list"></ul>
+        </div>
+        <div class="panel">
+          <h3>Runners still out <span id="outCount" class="count"></span></h3>
+          <input id="runnerSearch" class="input" type="search" placeholder="Search name or bib #" autocomplete="off">
+          <ul id="outRunners" class="list"></ul>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>Matched finishes</h3>
+        <ul id="assignedList" class="list"></ul>
+      </div>
+    </section>
+
+    <!-- RUNNERS -->
+    <section id="view-runners" class="view" hidden>
+      <div class="panel">
+        <h3 id="runnerFormTitle">Add a runner</h3>
+        <form id="runnerForm" class="form" autocomplete="off">
+          <div class="form-row">
+            <input name="first_name" class="input" placeholder="First name" required>
+            <input name="last_name" class="input" placeholder="Last name">
+          </div>
+          <div class="form-row">
+            <div class="toggle" data-toggle="age">
+              <button type="button" data-value="youngster" class="on">Youngster</button>
+              <button type="button" data-value="unc">Unc</button>
+            </div>
+            <input name="bib" class="input input-bib" type="number" min="1" inputmode="numeric" placeholder="Bib # (auto)">
+          </div>
+          <div class="form-row">
+            <button class="btn btn-primary" type="submit" id="runnerSaveBtn">Add runner</button>
+            <button class="btn btn-ghost" type="button" id="runnerCancelBtn" hidden>Cancel</button>
+          </div>
+        </form>
+      </div>
+
+      <details class="panel">
+        <summary>Bulk add (paste a list)</summary>
+        <p class="hint">One runner per line. Add <b>unc</b> or <b>youngster</b> after a comma to set the group, e.g. <code>Jane Doe, unc</code>. Lines without one use the default below.</p>
+        <textarea id="bulkText" class="input" rows="6" placeholder="Jane Doe, unc&#10;Timmy Doe, youngster&#10;Grandpa Joe"></textarea>
+        <div class="form-row">
+          <span class="hint">Default group:</span>
+          <div class="toggle" data-toggle="bulkAge">
+            <button type="button" data-value="youngster" class="on">Youngster</button>
+            <button type="button" data-value="unc">Unc</button>
+          </div>
+          <button id="bulkAddBtn" class="btn btn-primary" type="button">Add all</button>
+        </div>
+      </details>
+
+      <div class="runner-tools">
+        <input id="runnerFilter" class="input" type="search" placeholder="Search runners" autocomplete="off">
+        <a class="btn btn-ghost" href="/bibs.html">🖨 Print bibs</a>
+      </div>
+      <div id="runnerSummary" class="hint"></div>
+      <ul id="runnerList" class="list runner-list"></ul>
+
+      <div class="danger-zone">
+        <button id="clearAllBtn" class="btn btn-danger-ghost btn-small" type="button">Clear all data…</button>
+      </div>
+    </section>
+
+    <!-- LEADERBOARD -->
+    <section id="view-leaderboard" class="view" hidden>
+      <div class="lb-controls chrome">
+        <div class="chips" id="lbChips">
+          <button class="chip on" data-filter="all">All</button>
+          <button class="chip" data-filter="youngster">Youngster</button>
+          <button class="chip" data-filter="unc">Unc</button>
+        </div>
+        <button id="shotBtn" class="btn btn-ghost btn-small" type="button">📸 Screenshot mode</button>
+      </div>
+      <div class="lb-stage">
+        <div id="lbCard" class="lb-card">
+          <div class="lb-head">
+            <span class="turkey turkey-lg" data-turkey></span>
+            <div>
+              <div class="lb-title">Turkey Trot 5K</div>
+              <div class="lb-sub"><span data-year></span> · <span id="lbFilterLabel">Overall</span></div>
+            </div>
+            <span class="leaf" data-leaf></span>
+          </div>
+          <ol id="lbRows" class="lb-rows"></ol>
+          <div class="lb-foot"><span>Sun City Plumbing &amp; Heating</span><span id="lbPageLabel"></span></div>
+        </div>
+      </div>
+      <div class="lb-pager">
+        <button id="lbPrev" class="btn btn-ghost btn-small" type="button">‹ Prev</button>
+        <button id="lbNext" class="btn btn-ghost btn-small" type="button">Next ›</button>
+      </div>
+      <button id="shotExit" class="shot-exit" type="button" aria-label="Exit screenshot mode">✕</button>
+    </section>
+  </main>
+
+  <footer class="footer chrome">
+    <a href="https://youknowsuncity.com" target="_blank" rel="noopener">Sun City Plumbing &amp; Heating</a>
+  </footer>
+
+  <nav class="tabbar chrome">
+    <a href="#/clock" data-tab="clock"><span>⏱</span>Clock</a>
+    <a href="#/finish" data-tab="finish"><span>🏁</span>Finish</a>
+    <a href="#/runners" data-tab="runners"><span>🏃</span>Runners</a>
+    <a href="#/leaderboard" data-tab="leaderboard"><span>🏆</span>Leaderboard</a>
+  </nav>
+
+  <!-- Countdown overlay (5-4-3-2-1-GO), driven by the shared start time -->
+  <div id="countdown" class="countdown" hidden><div id="countdownNum"></div></div>
+
+  <!-- "Somebody finished" pulse -->
+  <div id="pulse" class="pulse" hidden></div>
+
+  <!-- Modal host -->
+  <div id="modal" class="modal" hidden>
+    <div class="modal-box" role="dialog" aria-modal="true">
+      <div id="modalBody"></div>
+    </div>
+  </div>
+
+  <!-- Toasts -->
+  <div id="toasts" class="toasts"></div>
+
+  <script src="/shared.js"></script>
+  <script src="/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Print Bibs · Turkey Trot 5K</title>
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/bibs.css">
+</head>
+<body>
+  <div class="controls">
+    <a href="/#/runners" class="back">← Back to runners</a>
+    <h1>Print bibs</h1>
+    <p>Two bibs per letter sheet. Print <b>portrait, 100% / Actual size</b>, with headers and footers turned off, then cut along the dashed line.</p>
+    <div class="ctl-row">
+      <label>Sort by
+        <select id="sort">
+          <option value="bib">Bib number</option>
+          <option value="last">Last name</option>
+        </select>
+      </label>
+      <label>Extra blank bibs (for walk-ups)
+        <input id="blanks" type="number" min="0" max="60" value="0">
+      </label>
+      <button id="printBtn" type="button">🖨 Print</button>
+    </div>
+    <p id="summary" class="summary"></p>
+  </div>
+  <div id="sheets"></div>
+  <script src="/shared.js"></script>
+  <script src="/bibs.js"></script>
+</body>
+</html>

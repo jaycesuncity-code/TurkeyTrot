@@ -1,0 +1,9 @@
+# Cloudflare Pages config. The D1 binding below is applied automatically on deploy.
+name = "turkey-trot"
+pages_build_output_dir = "public"
+compatibility_date = "2026-11-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "turkey-trot-db"
+database_id = "0b165ba5-d3e5-4096-a2e6-6c563a6e6a93"
