@@ -22,40 +22,18 @@
         <div id="clockStatus" class="clock-status">Waiting for the start</div>
       </div>
       <div class="home-actions">
-        <a class="home-finish" href="#/finish">FINISH</a>
+        <button id="finishBtn" class="home-finish" type="button">Someone Finished</button>
+        <div id="syncStatus" class="sync-status" hidden></div>
+        <ul id="myStamps" class="my-stamps"></ul>
+        <details id="otherStampsWrap" class="other-stamps" hidden>
+          <summary id="otherStampsLabel"></summary>
+          <ul id="otherStamps" class="my-stamps"></ul>
+        </details>
         <a class="home-runners" href="#/runners">See / Add Runners</a>
         <div class="home-links">
           <a href="#/leaderboard">Leaderboard</a>
           <button id="raceMenuBtn" class="link-btn" aria-label="Race controls">⋯</button>
         </div>
-      </div>
-    </section>
-
-    <!-- FINISH -->
-    <section id="view-finish" class="view" hidden>
-      <a class="back chrome" href="#/clock">‹ Clock</a>
-      <button id="finishBtn" class="finish-btn" type="button">
-        <span class="finish-word">FINISH</span>
-        <span class="finish-clock" data-clock>0:00:00.0</span>
-      </button>
-      <div id="lastStamp" class="last-stamp"></div>
-      <div id="syncStatus" class="sync-status"></div>
-
-      <div class="assign-help">Tap a time and a runner (either order) to match them.</div>
-      <div class="assign-grid">
-        <div class="panel">
-          <h3>Unassigned times <span id="queueCount" class="count"></span></h3>
-          <ul id="stampQueue" class="list"></ul>
-        </div>
-        <div class="panel">
-          <h3>Runners still out <span id="outCount" class="count"></span></h3>
-          <input id="runnerSearch" class="input" type="search" placeholder="Search name or bib #" autocomplete="off">
-          <ul id="outRunners" class="list"></ul>
-        </div>
-      </div>
-      <div class="panel">
-        <h3>Matched finishes</h3>
-        <ul id="assignedList" class="list"></ul>
       </div>
     </section>
 

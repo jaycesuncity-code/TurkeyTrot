@@ -14,8 +14,6 @@ const S = {
   loadedFull: false,
   online: true,
   view: 'clock',
-  selStamp: null,
-  selRunner: null,
   editingRunnerId: null,
   rev: null,
   lbFilter: 'all',
@@ -140,7 +138,15 @@ window.addEventListener('online', () => {
 // ================================================================
 // "Somebody finished!" pulse, shown on every open screen
 // ================================================================
-const myStampIds = new Set();
+// Stamps made on this phone (kept across reloads so the list under the button survives).
+const MINE_KEY = 'tt_mine_v1';
+const myStampIds = new Set((() => {
+  try { return JSON.parse(localStorage.getItem(MINE_KEY) || '[]'); } catch { return []; }
+})());
+function rememberMine(id) {
+  myStampIds.add(id);
+  localStorage.setItem(MINE_KEY, JSON.stringify([...myStampIds].slice(-300)));
+}
 const pulseQueue = [];
 let pulseBusy = false;
 
@@ -188,7 +194,7 @@ function nextPulse() {
 // ================================================================
 // Router
 // ================================================================
-const VIEWS = ['clock', 'finish', 'runners', 'leaderboard'];
+const VIEWS = ['clock', 'runners', 'leaderboard'];
 
 function route() {
   const name = (location.hash.replace(/^#\/?/, '') || 'clock').split('?')[0];
@@ -205,11 +211,11 @@ function route() {
 window.addEventListener('hashchange', route);
 
 // ================================================================
-// Wake lock (keep screens on for Clock and Finish)
+// Wake lock (keep the home screen on)
 // ================================================================
 let wakeLock = null;
 async function updateWakeLock() {
-  const want = (S.view === 'clock' || S.view === 'finish') && document.visibilityState === 'visible';
+  const want = S.view === 'clock' && document.visibilityState === 'visible';
   try {
     if (want && !wakeLock && 'wakeLock' in navigator) {
       wakeLock = await navigator.wakeLock.request('screen');
@@ -249,6 +255,7 @@ function toast(html, { ms = 3000, action, onAction } = {}) {
 let modalResolve = null;
 function openModal(html, { onOpen, dismissable = true } = {}) {
   closeModal(null);
+  $('#modal .modal-box').classList.remove('modal-wide');
   $('#modalBody').innerHTML = html;
   $('#modal').hidden = false;
   $('#modal').dataset.dismissable = dismissable ? '1' : '';
@@ -593,7 +600,7 @@ async function raceAction(path, body) {
 }
 
 // ================================================================
-// Finish view: offline-safe stamping
+// Home: "Someone Finished" button, offline-safe stamping
 // ================================================================
 const PENDING_KEY = 'tt_pending_v1';
 function loadPending() {
@@ -610,6 +617,14 @@ function savePending(list) {
 function removePending(id) {
   savePending(loadPending().filter((p) => p.id !== id));
 }
+function updatePending(id, patch) {
+  const list = loadPending();
+  const p = list.find((x) => x.id === id);
+  if (!p) return false;
+  Object.assign(p, patch);
+  savePending(list);
+  return true;
+}
 
 function uuid() {
   if (crypto.randomUUID) return crypto.randomUUID();
@@ -620,6 +635,7 @@ function uuid() {
 }
 
 let lastFinishTap = 0;
+let undoToast = null;
 function onFinishTap() {
   const tapServerNow = serverNow(); // capture the instant first
   const now = performance.now();
@@ -636,7 +652,7 @@ function onFinishTap() {
     return;
   }
   const stamp = { id: uuid(), elapsed_ms: elapsed, created_at: Math.round(tapServerNow) };
-  myStampIds.add(stamp.id);
+  rememberMine(stamp.id);
   savePending([...loadPending(), stamp]);
 
   navigator.vibrate && navigator.vibrate(80);
@@ -644,9 +660,10 @@ function onFinishTap() {
   btn.classList.remove('flash');
   void btn.offsetWidth;
   btn.classList.add('flash');
-  $('#lastStamp').innerHTML = `Stamped <b>${fmtTime(elapsed)}</b>`;
 
-  toast(`⏱ ${fmtTime(elapsed)} recorded`, {
+  // One undo toast at a time, always for the latest tap.
+  if (undoToast) undoToast.remove();
+  undoToast = toast(`⏱ ${fmtTime(elapsed)} recorded`, {
     ms: CONFIG.undoSeconds * 1000,
     action: 'Undo',
     onAction: () => undoStamp(stamp.id),
@@ -676,12 +693,18 @@ function undoStamp(id) {
   else list.push({ id, undone: true });
   savePending(list);
   S.stamps = S.stamps.filter((s) => s.id !== id);
-  $('#lastStamp').innerHTML = 'Last stamp undone';
+  S.runners.forEach((r) => {
+    if (r.stamp_id === id) { r.stamp_id = null; r.finish_ms = null; }
+  });
+  toast('Time removed.');
   lastSig = {};
   renderData();
   syncPending();
 }
 
+// Pending entries may also carry edits made before they reached the server
+// (an adjusted elapsed_ms and/or a runner_id). After the idempotent POST we
+// replay those as PATCHes, then drop the entry only if nothing changed meanwhile.
 let syncing = false;
 let syncRetry = null;
 async function syncPending() {
@@ -694,16 +717,21 @@ async function syncPending() {
       const list = loadPending();
       if (!list.length) break;
       const p = list[0];
+      const snap = JSON.stringify(p);
+      const url = '/api/stamps/' + encodeURIComponent(p.id);
       try {
         if (p.undone) {
-          await api('/api/stamps/' + encodeURIComponent(p.id), { method: 'DELETE' });
+          await api(url, { method: 'DELETE' });
           removePending(p.id);
-        } else {
-          await api('/api/stamps', { method: 'POST', body: { id: p.id, elapsed_ms: p.elapsed_ms, created_at: p.created_at } });
-          const fresh = loadPending().find((x) => x.id === p.id);
-          if (fresh && fresh.undone) continue; // undone mid-flight: next loop deletes it
-          removePending(p.id);
+          continue;
         }
+        await api('/api/stamps', { method: 'POST', body: { id: p.id, elapsed_ms: p.elapsed_ms, created_at: p.created_at } });
+        // POST is INSERT OR IGNORE, so an earlier attempt may have stored an older time.
+        if (p.adjusted) await api(url, { method: 'PATCH', body: { elapsed_ms: p.elapsed_ms } });
+        if ('runner_id' in p) await api(url, { method: 'PATCH', body: { runner_id: p.runner_id } });
+        const fresh = loadPending().find((x) => x.id === p.id);
+        if (fresh && JSON.stringify(fresh) !== snap) continue; // edited mid-flight: replay
+        removePending(p.id);
       } catch (e) {
         if (e.status >= 400 && e.status < 500 && e.status !== 408 && e.status !== 429) {
           removePending(p.id); // permanently bad, drop it
@@ -724,8 +752,8 @@ function renderSyncStatus() {
   const n = loadPending().filter((p) => !p.undone).length;
   const el = $('#syncStatus');
   if (!el) return;
-  el.className = 'sync-status ' + (n ? 'pending' : 'ok');
-  el.textContent = n ? `⏳ ${n} finish time${n > 1 ? 's' : ''} waiting to sync…` : '✓ All finish times synced';
+  el.hidden = !n;
+  el.textContent = n ? `⏳ ${n} time${n > 1 ? 's' : ''} saved on this phone, waiting to sync…` : '';
 }
 
 // Stamps as the user should see them: server list + local pending, minus undone.
@@ -735,7 +763,7 @@ function visibleStamps() {
   const serverIds = new Set(S.stamps.map((s) => s.id));
   const local = pending
     .filter((p) => !p.undone && !serverIds.has(p.id))
-    .map((p) => ({ ...p, runner_id: null, pending: true }));
+    .map((p) => ({ ...p, runner_id: p.runner_id ?? null, pending: true }));
   return [...S.stamps.filter((s) => !undone.has(s.id)), ...local].sort((a, b) => b.created_at - a.created_at);
 }
 
@@ -743,121 +771,194 @@ function runnerById(id) {
   return S.runners.find((r) => r.id === id);
 }
 
-function stampRowHtml(s, { assigned } = {}) {
-  const r = assigned ? runnerById(s.runner_id) : null;
-  const sel = S.selStamp === s.id ? ' sel' : '';
-  return `<li class="row stamp-row${sel}${s.pending ? ' pending' : ''}" data-stamp="${escapeHtml(s.id)}">
-    <span class="time">${fmtTime(s.elapsed_ms)}</span>
-    ${r ? `<span class="who">${ageIcon(r.age_group)} <b>#${r.bib ?? '–'}</b> ${escapeHtml(fullName(r))}</span>` : ''}
-    ${s.pending ? '<span class="tag">syncing</span>' : ''}
-    <span class="row-actions">
-      ${assigned ? '<button class="mini" data-act="unassign">Unassign</button>' : ''}
-      ${!s.pending ? '<button class="mini" data-act="edit" title="Edit time">✎</button><button class="mini" data-act="delete" title="Delete">🗑</button>' : ''}
-    </span>
-  </li>`;
+function homeStampHtml(s) {
+  const r = s.runner_id != null ? runnerById(s.runner_id) : null;
+  const who = r
+    ? `<span class="ms-who">${ageIcon(r.age_group, 'ms-icon')}<span>${escapeHtml(fullName(r))}</span></span>`
+    : '<span class="ms-ask">Who was this?</span>';
+  return `<li><button type="button" class="ms-item${r ? ' named' : ''}${s.pending ? ' pending' : ''}" data-stamp="${escapeHtml(s.id)}">
+    <span class="ms-time">${fmtTime(s.elapsed_ms)}</span>${who}
+    ${s.pending ? '<span class="ms-sync" title="Saved on this phone, syncing">⏳</span>' : ''}
+    <span class="ms-chev">›</span></button></li>`;
 }
 
-function renderFinish() {
+function renderHome() {
   const stamps = visibleStamps();
-  const unassigned = stamps.filter((s) => !s.runner_id);
-  const assigned = stamps.filter((s) => s.runner_id);
-  if (S.selStamp && !unassigned.some((s) => s.id === S.selStamp)) S.selStamp = null;
-
-  $('#queueCount').textContent = unassigned.length || '';
-  $('#stampQueue').innerHTML = unassigned.length
-    ? unassigned.map((s) => stampRowHtml(s)).join('')
-    : '<li class="empty">No unmatched times</li>';
-  $('#assignedList').innerHTML = assigned.length
-    ? assigned.map((s) => stampRowHtml(s, { assigned: true })).join('')
-    : '<li class="empty">Nothing matched yet</li>';
-
-  const q = $('#runnerSearch').value.trim().toLowerCase();
-  const out = S.runners.filter((r) => r.finish_ms == null);
-  if (S.selRunner && !out.some((r) => r.id === S.selRunner)) S.selRunner = null;
-  const shown = out.filter((r) => !q || fullName(r).toLowerCase().includes(q) || String(r.bib) === q.replace('#', ''));
-  $('#outCount').textContent = out.length || '';
-  $('#outRunners').innerHTML = shown.length
-    ? shown
-        .map(
-          (r) => `<li class="row runner-pick${S.selRunner === r.id ? ' sel' : ''}" data-runner="${r.id}">
-            <b class="bib">#${r.bib ?? '–'}</b> ${ageIcon(r.age_group)} <span>${escapeHtml(fullName(r))}</span></li>`
-        )
-        .join('')
-    : `<li class="empty">${out.length ? 'No match' : 'Everyone has a time'}</li>`;
+  const mine = stamps.filter((s) => myStampIds.has(s.id));
+  $('#myStamps').innerHTML = mine.map(homeStampHtml).join('');
+  // Unnamed times from other phones, tucked away so nothing gets orphaned.
+  const others = stamps.filter((s) => !myStampIds.has(s.id) && s.runner_id == null);
+  $('#otherStampsWrap').hidden = !others.length;
+  $('#otherStampsLabel').textContent = `${others.length} unnamed time${others.length > 1 ? 's' : ''} from other phones`;
+  $('#otherStamps').innerHTML = others.map(homeStampHtml).join('');
+  renderSyncStatus();
 }
 
-$('#runnerSearch').addEventListener('input', () => renderFinish());
-
-$('#stampQueue').addEventListener('click', (e) => handleStampClick(e));
-$('#assignedList').addEventListener('click', (e) => handleStampClick(e));
-
-async function handleStampClick(e) {
-  const li = e.target.closest('[data-stamp]');
-  if (!li) return;
-  const id = li.dataset.stamp;
-  const stamp = visibleStamps().find((s) => s.id === id);
-  if (!stamp) return;
-  const act = e.target.closest('[data-act]')?.dataset.act;
-
-  if (act === 'unassign') {
-    if (!(await requireAuth('unassignStamp'))) return;
-    return assignStamp(id, null);
-  }
-  if (act === 'edit') {
-    if (!(await requireAuth('editTime'))) return;
-    const v = await promptDialog('Edit time', 'Format H:MM:SS.t (for example 0:23:41.7)', { value: fmtTime(stamp.elapsed_ms) });
-    if (v == null) return;
-    const ms = parseTime(v);
-    if (ms == null) return toast("Couldn't read that time.");
-    try {
-      await api('/api/stamps/' + encodeURIComponent(id), { method: 'PATCH', body: { elapsed_ms: ms } });
-      toast('Time updated.');
-    } catch (err) {
-      toast('Failed: ' + escapeHtml(err.message));
-    }
-    return poll();
-  }
-  if (act === 'delete') {
-    if (!(await requireAuth('deleteStamp'))) return;
-    if (!(await confirmDialog('Delete this time?', `${fmtTime(stamp.elapsed_ms)} will be removed${stamp.runner_id ? ' and the runner will have no time' : ''}.`, 'Delete', true))) return;
-    try {
-      await api('/api/stamps/' + encodeURIComponent(id), { method: 'DELETE' });
-      S.stamps = S.stamps.filter((s) => s.id !== id);
-      toast('Deleted.');
-    } catch (err) {
-      toast('Failed: ' + escapeHtml(err.message));
-    }
-    return poll();
-  }
-  if (stamp.runner_id) return; // assigned rows only have buttons
-  if (stamp.pending) return toast('That time is still syncing. One moment…');
-  S.selStamp = S.selStamp === id ? null : id;
-  maybeAssign();
-}
-
-$('#outRunners').addEventListener('click', (e) => {
-  const li = e.target.closest('[data-runner]');
-  if (!li) return;
-  const id = Number(li.dataset.runner);
-  S.selRunner = S.selRunner === id ? null : id;
-  maybeAssign();
+$('#view-clock').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-stamp]');
+  if (b) openStampSheet(b.dataset.stamp);
 });
 
-function maybeAssign() {
-  if (S.selStamp && S.selRunner) {
-    const s = S.selStamp;
-    const r = S.selRunner;
-    S.selStamp = S.selRunner = null;
-    assignStamp(s, r);
-  } else {
-    renderFinish();
-    if (S.selStamp) toast('Now tap the runner.', { ms: 1500 });
-    else if (S.selRunner) toast('Now tap their time.', { ms: 1500 });
+function findStamp(id) {
+  return visibleStamps().find((s) => s.id === id);
+}
+
+async function openStampSheet(id) {
+  const s = findStamp(id);
+  if (!s) return;
+  const r = s.runner_id != null ? runnerById(s.runner_id) : null;
+  const choice = await openModal(
+    `<div class="sheet-time">${fmtTime(s.elapsed_ms)}</div>
+     <div class="sheet-sub">${r ? `${ageIcon(r.age_group, 'ms-icon')} ${escapeHtml(fullName(r))}` : 'Not named yet'}</div>
+     <div class="sheet-actions">
+       <button class="btn btn-ghost sheet-btn" data-v="adjust">⏱ Adjust Time</button>
+       <button class="btn btn-primary sheet-btn" data-v="who">👤 Who was this?</button>
+     </div>
+     <div class="sheet-foot">
+       <button class="link-quiet" data-v="delete">Remove this time</button>
+       <button class="link-quiet" data-v="">Close</button>
+     </div>`,
+    { onOpen: (box) => box.querySelectorAll('[data-v]').forEach((b) => (b.onclick = () => closeModal(b.dataset.v || null))) }
+  );
+  if (choice === 'adjust') adjustTime(id);
+  else if (choice === 'who') pickRunner(id);
+  else if (choice === 'delete') deleteStamp(id);
+}
+
+// ---------- Adjust Time ----------
+async function adjustTime(id) {
+  const s = findStamp(id);
+  if (!s) return;
+  // This phone's own taps can be nudged freely; other phones' times need the password.
+  if (!myStampIds.has(id) && !(await requireAuth('editTime'))) return;
+  let ms = s.elapsed_ms;
+  const steps = [-5000, -1000, -100, 100, 1000, 5000];
+  const label = (d) => (d > 0 ? '+' : '−') + (Math.abs(d) >= 1000 ? Math.abs(d) / 1000 + 's' : '0.1s');
+  const v = await openModal(
+    `<h2>Adjust time</h2>
+     <form data-act="form" class="adjust">
+       <input class="input adjust-input" name="v" value="${fmtTime(ms)}" inputmode="decimal" autocomplete="off" aria-label="Finish time">
+       <div class="nudges">${steps.map((d) => `<button type="button" class="nudge" data-d="${d}">${label(d)}</button>`).join('')}</div>
+       <div class="hint center">Type it (like 0:23:41.7) or nudge it.</div>
+       <div class="modal-actions">
+         <button type="button" class="btn btn-ghost" data-act="cancel">Cancel</button>
+         <button type="submit" class="btn btn-primary">Save</button>
+       </div>
+     </form>`,
+    {
+      onOpen: (box) => {
+        const input = box.querySelector('input');
+        box.querySelectorAll('.nudge').forEach(
+          (b) =>
+            (b.onclick = () => {
+              const cur = parseTime(input.value);
+              ms = Math.max(0, (cur == null ? ms : cur) + Number(b.dataset.d));
+              input.value = fmtTime(ms);
+            })
+        );
+        box.querySelector('[data-act=cancel]').onclick = () => closeModal(null);
+        box.querySelector('form').onsubmit = (e) => {
+          e.preventDefault();
+          closeModal(input.value);
+        };
+      },
+    }
+  );
+  if (v == null) return;
+  const next = parseTime(v);
+  if (next == null) return toast("Couldn't read that time.");
+  if (next === s.elapsed_ms) return;
+  if (updatePending(id, { elapsed_ms: next, adjusted: true })) {
+    toast(`Time changed to ${fmtTime(next)}.`);
+    lastSig = {};
+    renderData();
+    return syncPending();
   }
+  try {
+    await api('/api/stamps/' + encodeURIComponent(id), { method: 'PATCH', body: { elapsed_ms: next } });
+    const st = S.stamps.find((x) => x.id === id);
+    if (st) st.elapsed_ms = next;
+    S.runners.forEach((r) => { if (r.stamp_id === id) r.finish_ms = next; });
+    toast(`Time changed to ${fmtTime(next)}.`);
+  } catch (err) {
+    toast('Failed: ' + escapeHtml(err.message));
+  }
+  lastSig = {};
+  renderData();
+  poll();
+}
+
+// ---------- Who was this? ----------
+function lastInitial(r) {
+  return String(r.last_name || '').trim().charAt(0).toUpperCase();
+}
+function byLastInitial(a, b) {
+  const la = lastInitial(a);
+  const lb = lastInitial(b);
+  if (!la !== !lb) return la ? -1 : 1; // no last initial goes at the end
+  return la.localeCompare(lb) || String(a.first_name).localeCompare(String(b.first_name), undefined, { sensitivity: 'base' }) || a.id - b.id;
+}
+
+async function pickRunner(id) {
+  const s = findStamp(id);
+  if (!s) return;
+  const current = s.runner_id;
+  // Runners who already have a time (on the server or waiting to sync) are left out.
+  const taken = new Set(S.runners.filter((r) => r.finish_ms != null).map((r) => r.id));
+  visibleStamps().forEach((x) => { if (x.runner_id != null) taken.add(x.runner_id); });
+  const list = S.runners.filter((r) => r.id === current || !taken.has(r.id)).sort(byLastInitial);
+  const pill = (r) => `<button type="button" class="pill${r.id === current ? ' on' : ''}" data-runner="${r.id}">
+      ${ageIcon(r.age_group, 'pill-icon')}<span class="pill-name">${escapeHtml(r.first_name)}${lastInitial(r) ? ` <b>${lastInitial(r)}.</b>` : ''}</span></button>`;
+  const picked = await openModal(
+    `<h2>Who finished at <span class="mono">${fmtTime(s.elapsed_ms)}</span>?</h2>
+     ${list.length > 16 ? '<input class="input pill-search" type="search" placeholder="Search" autocomplete="off">' : ''}
+     <div class="pill-grid">${list.length ? list.map(pill).join('') : '<div class="empty">Everyone already has a time. Add runners from See / Add Runners.</div>'}</div>
+     <div class="sheet-foot">
+       ${current != null ? '<button class="link-quiet" data-act="clear">Not them, clear name</button>' : '<span></span>'}
+       <button class="link-quiet" data-act="cancel">Cancel</button>
+     </div>`,
+    {
+      onOpen: (box) => {
+        box.closest('.modal-box').classList.add('modal-wide');
+        box.querySelector('[data-act=cancel]').onclick = () => closeModal(null);
+        const clr = box.querySelector('[data-act=clear]');
+        if (clr) clr.onclick = () => closeModal('clear');
+        box.querySelectorAll('.pill').forEach((b) => (b.onclick = () => closeModal(Number(b.dataset.runner))));
+        const q = box.querySelector('.pill-search');
+        if (q)
+          q.oninput = () => {
+            const t = q.value.trim().toLowerCase();
+            box.querySelectorAll('.pill').forEach((b) => {
+              b.hidden = t && !b.textContent.toLowerCase().replace(/\s+/g, ' ').includes(t);
+            });
+          };
+      },
+    }
+  );
+  if (picked == null) return;
+  const runnerId = picked === 'clear' ? null : picked;
+  if (runnerId === current) return;
+  assignStamp(id, runnerId);
+}
+
+async function deleteStamp(id) {
+  const s = findStamp(id);
+  if (!s) return;
+  if (!(await requireAuth('deleteStamp'))) return;
+  if (!(await confirmDialog('Remove this time?', `${fmtTime(s.elapsed_ms)} will be removed${s.runner_id != null ? ' and that runner will have no time' : ''}.`, 'Remove', true))) return;
+  undoStamp(id);
 }
 
 async function assignStamp(stampId, runnerId) {
   if (runnerId != null && !(await requireAuth('assignStamp'))) return;
+  // Not on the server yet: remember the name with the pending time; sync sends it.
+  if (updatePending(stampId, { runner_id: runnerId })) {
+    const r = runnerById(runnerId);
+    toast(r ? `✓ ${escapeHtml(fullName(r))}` : 'Name cleared.');
+    lastSig = {};
+    renderData();
+    return syncPending();
+  }
   // Optimistic update
   const stamp = S.stamps.find((s) => s.id === stampId);
   if (stamp) {
@@ -873,7 +974,7 @@ async function assignStamp(stampId, runnerId) {
   try {
     await api('/api/stamps/' + encodeURIComponent(stampId), { method: 'PATCH', body: { runner_id: runnerId } });
     const r = runnerById(runnerId);
-    if (r) toast(`✓ ${escapeHtml(fullName(r))}: ${fmtTime(stamp ? stamp.elapsed_ms : 0)}`);
+    toast(r ? `✓ ${escapeHtml(fullName(r))}: ${fmtTime(stamp ? stamp.elapsed_ms : 0)}` : 'Name cleared.');
   } catch (e) {
     toast('Failed: ' + escapeHtml(e.message));
   }
@@ -1012,7 +1113,7 @@ $('#runnerList').addEventListener('click', async (e) => {
     if (r.stamp_id) assignStamp(r.stamp_id, null);
   } else if (act === 'delete') {
     if (!(await requireAuth('deleteRunner'))) return;
-    if (!(await confirmDialog('Delete runner?', `Remove <b>${escapeHtml(fullName(r))}</b>? Their finish time (if any) goes back to the unmatched list.`, 'Delete', true))) return;
+    if (!(await confirmDialog('Delete runner?', `Remove <b>${escapeHtml(fullName(r))}</b>? Their finish time (if any) goes back to being unnamed.`, 'Delete', true))) return;
     try {
       await api('/api/runners/' + r.id, { method: 'DELETE' });
       toast('Deleted.');
@@ -1092,13 +1193,11 @@ function renderData() {
   renderClockStatus();
   const pendingSig = localStorage.getItem(PENDING_KEY) || '';
   const dataSig = JSON.stringify([S.runners, S.stamps]);
-  const sig = S.view + '|' + dataSig + '|' + pendingSig + '|' + S.selStamp + '|' + S.selRunner;
+  const sig = S.view + '|' + dataSig + '|' + pendingSig;
   if (lastSig[S.view] === sig) return;
   lastSig[S.view] = sig;
-  if (S.view === 'finish') {
-    renderFinish();
-    renderSyncStatus();
-  } else if (S.view === 'runners') renderRunners();
+  if (S.view === 'clock') renderHome();
+  else if (S.view === 'runners') renderRunners();
   else if (S.view === 'leaderboard') renderLeaderboard();
 }
 
