@@ -1245,12 +1245,6 @@ $('#runnerList').addEventListener('click', async (e) => {
   }
 });
 
-$('#clearAllBtn').addEventListener('click', async () => {
-  if (!(await requireAuth('clearAll'))) return;
-  const v = await promptDialog('Clear ALL data?', 'This deletes every runner, every finish time, and resets the race. Type <b>CLEAR</b> to confirm.', { okLabel: 'Clear everything' });
-  if ((v || '').trim().toUpperCase() !== 'CLEAR') return;
-  await raceAction('/api/reset', { scope: 'all' });
-});
 
 // ================================================================
 // Leaderboard
