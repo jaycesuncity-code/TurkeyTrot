@@ -92,8 +92,11 @@ textarea.input { resize: vertical; }
 .form { display: grid; gap: 10px; }
 .form-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 .form-row > .input { flex: 1 1 140px; }
-.form-actions { justify-content: flex-start; margin-top: 6px; }
-.btn-add { font-size: 1.2rem; padding: 16px 34px; min-width: 200px; box-shadow: 0 4px 12px rgba(0,0,0,.18); }
+.form-actions { justify-content: space-between; }
+.btn-add { font-size: 1.05rem; padding: 12px 24px; box-shadow: 0 3px 10px rgba(0,0,0,.16); }
+.edit-runner-form { display: flex; flex-direction: column; gap: 8px; }
+.edit-runner-form .toggle { align-self: flex-start; margin-top: 6px; }
+.field-label { font-size: .85rem; font-weight: 700; color: var(--gray); margin-top: 4px; }
 .no-callout, .runner-row [data-act="edit"] { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; touch-action: manipulation; }
 .toggle { display: inline-flex; background: var(--cream-2); border-radius: 999px; padding: 3px; }
 .toggle button { border: 0; background: transparent; padding: 9px 16px; border-radius: 999px; font: inherit; font-weight: 700; color: var(--gray); cursor: pointer; }

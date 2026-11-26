@@ -93,21 +93,18 @@
     <section id="view-runners" class="view" hidden>
       <a class="back chrome" href="#/clock">‹ Clock</a>
       <div class="panel">
-        <h3 id="runnerFormTitle">Add a runner</h3>
+        <h3>Add a runner</h3>
         <form id="runnerForm" class="form" autocomplete="off">
           <div class="form-row">
             <input name="first_name" class="input" placeholder="First name" required>
             <input name="last_name" class="input" placeholder="Last initial" maxlength="1" autocapitalize="characters">
           </div>
-          <div class="form-row">
+          <div class="form-row form-actions">
             <div class="toggle" data-toggle="age">
               <button type="button" data-value="youngster" class="on">Youngster</button>
               <button type="button" data-value="unc">Unc</button>
             </div>
-          </div>
-          <div class="form-row form-actions">
-            <button class="btn btn-primary btn-add no-callout" type="submit" id="runnerSaveBtn">Add runner</button>
-            <button class="btn btn-ghost" type="button" id="runnerCancelBtn" hidden>Cancel</button>
+            <button class="btn btn-primary btn-add no-callout" type="submit" id="runnerSaveBtn">Add runner to list</button>
           </div>
         </form>
       </div>

@@ -14,7 +14,6 @@ const S = {
   loadedFull: false,
   online: true,
   view: 'clock',
-  editingRunnerId: null,
   rev: null,
 };
 
@@ -1060,17 +1059,6 @@ $$('[data-toggle] button').forEach((b) =>
   b.addEventListener('click', () => setToggle(b.parentElement.dataset.toggle, b.dataset.value))
 );
 
-function resetRunnerForm() {
-  S.editingRunnerId = null;
-  const f = $('#runnerForm');
-  f.reset();
-  setToggle('age', 'youngster');
-  $('#runnerFormTitle').textContent = 'Add a runner';
-  $('#runnerSaveBtn').textContent = 'Add runner';
-  $('#runnerCancelBtn').hidden = true;
-}
-$('#runnerCancelBtn').addEventListener('click', resetRunnerForm);
-
 $('#runnerForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const f = e.target;
@@ -1079,23 +1067,64 @@ $('#runnerForm').addEventListener('submit', async (e) => {
     last_name: f.last_name.value,
     age_group: toggleValue('age'),
   };
-  const editing = S.editingRunnerId;
-  if (!(await requireAuth(editing ? 'editRunner' : 'addRunner'))) return;
+  if (!(await requireAuth('addRunner'))) return;
   try {
-    if (editing) {
-      await api('/api/runners/' + editing, { method: 'PATCH', body });
-      toast('Saved.');
-    } else {
-      await api('/api/runners', { method: 'POST', body });
-      toast(`Added ${escapeHtml(body.first_name)}.`);
-    }
-    resetRunnerForm();
+    await api('/api/runners', { method: 'POST', body });
+    toast(`Added ${escapeHtml(body.first_name)}.`);
+    f.reset();
+    setToggle('age', 'youngster');
     f.first_name.focus();
   } catch (err) {
     toast('Failed: ' + escapeHtml(err.message));
   }
   poll();
 });
+
+async function editRunnerModal(r) {
+  if (!(await requireAuth('editRunner'))) return;
+  const body = await openModal(
+    `<h2>Edit #${r.bib ?? ''} ${escapeHtml(fullName(r))}</h2>
+     <form data-act="form" class="form edit-runner-form" autocomplete="off">
+       <label class="field-label">First name</label>
+       <input class="input" name="first_name" value="${escapeHtml(r.first_name)}" required>
+       <label class="field-label">Last initial</label>
+       <input class="input" name="last_name" value="${escapeHtml(r.last_name || '')}" maxlength="1" autocapitalize="characters">
+       <div class="toggle" data-modal-toggle>
+         <button type="button" data-value="youngster" class="${r.age_group === 'youngster' ? 'on' : ''}">Youngster</button>
+         <button type="button" data-value="unc" class="${r.age_group === 'unc' ? 'on' : ''}">Unc</button>
+       </div>
+       <div class="modal-actions">
+         <button type="button" class="btn btn-ghost" data-act="cancel">Cancel</button>
+         <button type="submit" class="btn btn-primary">Save changes</button>
+       </div>
+     </form>`,
+    {
+      onOpen: (box) => {
+        const f = box.querySelector('form');
+        const tb = box.querySelectorAll('[data-modal-toggle] button');
+        tb.forEach((b) => (b.onclick = () => tb.forEach((x) => x.classList.toggle('on', x === b))));
+        setTimeout(() => f.first_name.focus(), 50);
+        box.querySelector('[data-act=cancel]').onclick = () => closeModal(null);
+        f.onsubmit = (e) => {
+          e.preventDefault();
+          closeModal({
+            first_name: f.first_name.value,
+            last_name: f.last_name.value,
+            age_group: box.querySelector('[data-modal-toggle] button.on').dataset.value,
+          });
+        };
+      },
+    }
+  );
+  if (!body) return;
+  try {
+    await api('/api/runners/' + r.id, { method: 'PATCH', body });
+    toast('Saved.');
+  } catch (err) {
+    toast('Failed: ' + escapeHtml(err.message));
+  }
+  poll();
+}
 
 $('#bulkAddBtn').addEventListener('click', async () => {
   const def = toggleValue('bulkAge');
@@ -1159,7 +1188,6 @@ function onLongPress(root, selector, fn, ms = 700) {
 
 // Hold "Add runner" → show/hide bulk add
 onLongPress($('#runnerForm'), '#runnerSaveBtn', () => {
-  if (S.editingRunnerId) return;
   const p = $('#bulkPanel');
   p.hidden = !p.hidden;
   if (!p.hidden) {
@@ -1201,15 +1229,7 @@ $('#runnerList').addEventListener('click', async (e) => {
   const r = runnerById(Number(li.dataset.id));
   if (!r) return;
   if (act === 'edit') {
-    S.editingRunnerId = r.id;
-    const f = $('#runnerForm');
-    f.first_name.value = r.first_name;
-    f.last_name.value = r.last_name;
-    setToggle('age', r.age_group);
-    $('#runnerFormTitle').textContent = `Edit #${r.bib ?? ''} ${fullName(r)}`;
-    $('#runnerSaveBtn').textContent = 'Save changes';
-    $('#runnerCancelBtn').hidden = false;
-    f.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    editRunnerModal(r);
   } else if (act === 'clear') {
     if (!(await requireAuth('unassignStamp'))) return;
     if (r.stamp_id) assignStamp(r.stamp_id, null);
