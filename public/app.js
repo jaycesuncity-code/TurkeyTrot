@@ -1012,13 +1012,11 @@ $('#runnerForm').addEventListener('submit', async (e) => {
     first_name: f.first_name.value,
     last_name: f.last_name.value,
     age_group: toggleValue('age'),
-    bib: f.bib.value === '' ? null : Number(f.bib.value),
   };
   const editing = S.editingRunnerId;
   if (!(await requireAuth(editing ? 'editRunner' : 'addRunner'))) return;
   try {
     if (editing) {
-      if (body.bib == null) delete body.bib;
       await api('/api/runners/' + editing, { method: 'PATCH', body });
       toast('Saved.');
     } else {
@@ -1065,11 +1063,50 @@ $('#bulkAddBtn').addEventListener('click', async () => {
   poll();
 });
 
-$('#runnerFilter').addEventListener('input', () => renderRunners());
+// Hidden shortcuts: press & hold. Fires fn(el) after `ms`; the click that
+// follows the release is swallowed so the normal tap action doesn't run.
+function onLongPress(root, selector, fn, ms = 700) {
+  let timer = null, startX = 0, startY = 0, fired = false;
+  const cancel = () => { clearTimeout(timer); timer = null; };
+  root.addEventListener('pointerdown', (e) => {
+    const el = e.target.closest(selector);
+    if (!el || !root.contains(el)) return;
+    fired = false;
+    startX = e.clientX; startY = e.clientY;
+    cancel();
+    timer = setTimeout(() => {
+      timer = null;
+      fired = true;
+      if (navigator.vibrate) navigator.vibrate(30);
+      fn(el);
+    }, ms);
+  });
+  root.addEventListener('pointermove', (e) => {
+    if (timer && Math.hypot(e.clientX - startX, e.clientY - startY) > 12) cancel();
+  });
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach((t) => root.addEventListener(t, cancel));
+  root.addEventListener('click', (e) => {
+    if (fired && e.target.closest(selector)) { e.preventDefault(); e.stopImmediatePropagation(); fired = false; }
+  }, true);
+  root.addEventListener('contextmenu', (e) => { if (e.target.closest(selector)) e.preventDefault(); });
+}
+
+// Hold "Add runner" → show/hide bulk add
+onLongPress($('#runnerForm'), '#runnerSaveBtn', () => {
+  if (S.editingRunnerId) return;
+  const p = $('#bulkPanel');
+  p.hidden = !p.hidden;
+  if (!p.hidden) {
+    p.open = true;
+    p.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    $('#bulkText').focus({ preventScroll: true });
+  }
+});
+// Hold any "Edit" → print bibs
+onLongPress($('#runnerList'), '[data-act="edit"]', () => { location.href = '/bibs.html'; });
 
 function renderRunners() {
-  const q = $('#runnerFilter').value.trim().toLowerCase();
-  const list = S.runners.filter((r) => !q || fullName(r).toLowerCase().includes(q) || String(r.bib) === q.replace('#', ''));
+  const list = S.runners;
   const done = S.runners.filter((r) => r.finish_ms != null).length;
   $('#runnerSummary').textContent = S.runners.length ? `${S.runners.length} runners · ${done} finished` : '';
   $('#runnerList').innerHTML = list.length
@@ -1088,7 +1125,7 @@ function renderRunners() {
       </li>`
         )
         .join('')
-    : `<li class="empty">${S.runners.length ? 'No match' : S.loadedFull ? 'No runners yet. Add some above.' : 'Loading…'}</li>`;
+    : `<li class="empty">${S.loadedFull ? 'No runners yet. Add some above.' : 'Loading…'}</li>`;
 }
 
 $('#runnerList').addEventListener('click', async (e) => {
@@ -1102,7 +1139,6 @@ $('#runnerList').addEventListener('click', async (e) => {
     const f = $('#runnerForm');
     f.first_name.value = r.first_name;
     f.last_name.value = r.last_name;
-    f.bib.value = r.bib ?? '';
     setToggle('age', r.age_group);
     $('#runnerFormTitle').textContent = `Edit #${r.bib ?? ''} ${fullName(r)}`;
     $('#runnerSaveBtn').textContent = 'Save changes';

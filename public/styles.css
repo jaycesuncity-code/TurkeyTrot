@@ -92,7 +92,9 @@ textarea.input { resize: vertical; }
 .form { display: grid; gap: 10px; }
 .form-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 .form-row > .input { flex: 1 1 140px; }
-.input-bib { max-width: 150px; }
+.form-actions { justify-content: flex-start; margin-top: 6px; }
+.btn-add { font-size: 1.2rem; padding: 16px 34px; min-width: 200px; box-shadow: 0 4px 12px rgba(0,0,0,.18); }
+.no-callout, .runner-row [data-act="edit"] { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; touch-action: manipulation; }
 .toggle { display: inline-flex; background: var(--cream-2); border-radius: 999px; padding: 3px; }
 .toggle button { border: 0; background: transparent; padding: 9px 16px; border-radius: 999px; font: inherit; font-weight: 700; color: var(--gray); cursor: pointer; }
 .toggle button.on { background: var(--maroon); color: var(--cream); }
@@ -169,7 +171,6 @@ body[data-view="clock"] .footer a { color: var(--gold); }
 @media (min-width: 720px) { .assign-grid { grid-template-columns: 1fr 1fr; margin-top: 12px; } }
 
 /* ---------- runners ---------- */
-.runner-tools { display: flex; gap: 10px; margin-top: 14px; }
 .runner-row .name { display: flex; flex-direction: column; min-width: 0; font-weight: 600; }
 .runner-row .name small { color: var(--gray); font-weight: 500; }
 .runner-row .time { margin-left: auto; }

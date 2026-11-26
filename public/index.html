@@ -52,16 +52,15 @@
               <button type="button" data-value="youngster" class="on">Youngster</button>
               <button type="button" data-value="unc">Unc</button>
             </div>
-            <input name="bib" class="input input-bib" type="number" min="1" inputmode="numeric" placeholder="Bib # (auto)">
           </div>
-          <div class="form-row">
-            <button class="btn btn-primary" type="submit" id="runnerSaveBtn">Add runner</button>
+          <div class="form-row form-actions">
+            <button class="btn btn-primary btn-add no-callout" type="submit" id="runnerSaveBtn">Add runner</button>
             <button class="btn btn-ghost" type="button" id="runnerCancelBtn" hidden>Cancel</button>
           </div>
         </form>
       </div>
 
-      <details class="panel">
+      <details id="bulkPanel" class="panel" hidden>
         <summary>Bulk add (paste a list)</summary>
         <p class="hint">One runner per line. Add <b>unc</b> or <b>youngster</b> after a comma to set the group, e.g. <code>Jane Doe, unc</code>. Lines without one use the default below.</p>
         <textarea id="bulkText" class="input" rows="6" placeholder="Jane Doe, unc&#10;Timmy Doe, youngster&#10;Grandpa Joe"></textarea>
@@ -75,10 +74,6 @@
         </div>
       </details>
 
-      <div class="runner-tools">
-        <input id="runnerFilter" class="input" type="search" placeholder="Search runners" autocomplete="off">
-        <a class="btn btn-ghost" href="/bibs.html">🖨 Print bibs</a>
-      </div>
       <div id="runnerSummary" class="hint"></div>
       <ul id="runnerList" class="list runner-list"></ul>
 
