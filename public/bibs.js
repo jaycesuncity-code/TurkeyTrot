@@ -5,17 +5,18 @@ const blankNums = [];
 
 function oneBib(b) {
   const numStr = String(b.bib ?? '');
-  const sizeClass = numStr.length >= 5 ? 'n5' : numStr.length === 4 ? 'n4' : '';
-  const name = b.blank ? '<div class="bib-name blank"></div>' : `<div class="bib-name">${escapeHtml(fullName(b))}</div>`;
-  const group = b.blank
-    ? '<span class="bib-group">Youngster ☐ &nbsp; Unc ☐</span>'
-    : `<span class="bib-group">${ageIcon(b.age_group)} ${AGE_GROUPS[b.age_group].label}</span>`;
+  const sizeClass = 'n' + Math.min(Math.max(numStr.length, 1), 5);
+  const name = b.blank
+    ? '<div class="bib-name blank"></div>'
+    : `<div class="bib-name">${escapeHtml(fullName(b).toUpperCase())}</div>`;
+  const team = b.blank
+    ? '<div class="bib-team blank"><span class="team-word">TEAM</span><span class="team-pick">UNCS ☐ &nbsp; YOUNGSTERS ☐</span></div>'
+    : `<div class="bib-team team-${b.age_group}"><span class="team-word">TEAM</span><span class="team-name">${b.age_group === 'unc' ? 'UNCS' : 'YOUNGSTERS'}</span></div>`;
   return `<div class="bib">
-    <span class="pin tl"></span><span class="pin tr"></span><span class="pin bl"></span><span class="pin br"></span>
-    <div class="bib-band"><span class="turkey">${TURKEY_SVG}</span>Turkey Trot 5K · ${CONFIG.year}<span class="turkey">${TURKEY_SVG}</span></div>
+    <img class="bib-bg" src="/assets/bib-template.png" alt="">
     <div class="bib-num ${sizeClass}">${escapeHtml(numStr)}</div>
     ${name}
-    <div class="bib-foot">${group}</div>
+    ${team}
   </div>`;
 }
 

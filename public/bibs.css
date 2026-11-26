@@ -17,42 +17,39 @@ body { margin: 0; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Ari
   width: 8in; height: 10.5in; margin: 0 auto 0.3in; background: #fff; box-shadow: 0 4px 16px rgba(0,0,0,.15);
   display: flex; flex-direction: column; overflow: hidden;
 }
-.bib {
-  height: 5.25in; position: relative; padding: 0.3in 0.4in; display: flex; flex-direction: column; align-items: center;
-}
+/* Each bib = half a sheet (8in x 5.25in). Jayce's blank template is the background;
+   positions below are percentages of the template so text lands in the open middle. */
+.bib { height: 5.25in; position: relative; overflow: hidden; }
 .bib + .bib { border-top: 2px dashed #9a9a9a; }
 .bib + .bib::before {
-  content: '✂ cut here'; position: absolute; top: -0.11in; left: 0.3in; background: #fff; padding: 0 6px;
-  font-size: 9pt; color: #777; line-height: 0.2in;
+  content: '✂ cut here'; position: absolute; top: 0; left: 0.3in; z-index: 2; background: #fff; padding: 0 6px;
+  font-size: 9pt; color: #777; line-height: 0.18in; border-radius: 0 0 4px 4px;
 }
-.bib-band {
-  width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.15in;
-  background: var(--maroon); color: var(--gold); border-radius: 0.12in; padding: 0.08in 0.2in;
-  font-weight: 900; font-size: 20pt; letter-spacing: .06em; text-transform: uppercase;
-  border-bottom: 0.06in solid var(--gold);
-}
-.bib-band .turkey { width: 0.45in; height: 0.45in; }
-.bib-band svg { width: 100%; height: 100%; display: block; }
+.bib-bg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 .bib-num {
-  flex: 1; display: flex; align-items: center; justify-content: center;
+  position: absolute; left: 0; right: 0; top: 24%; height: 42%;
+  display: flex; align-items: center; justify-content: center;
   font-family: 'Arial Black', 'Helvetica Neue', Arial, sans-serif; font-weight: 900; line-height: 1;
-  color: var(--maroon); font-size: 2.6in; letter-spacing: -0.02em; font-variant-numeric: tabular-nums;
+  color: #8B0D1A; font-size: 2.9in; letter-spacing: -0.02em; font-variant-numeric: tabular-nums;
 }
-.bib-num.n4 { font-size: 2.1in; }
-.bib-num.n5 { font-size: 1.7in; letter-spacing: 0.01em; }
-.bib-name { font-size: 26pt; font-weight: 800; text-align: center; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.bib-name.blank { width: 70%; border-bottom: 2px solid #bbb; height: 0.45in; }
-.bib-foot { width: 100%; display: flex; justify-content: center; align-items: center; margin-top: 0.1in; font-size: 11pt; font-weight: 700; color: var(--maroon); }
-.bib-group { display: flex; align-items: center; gap: 0.08in; font-size: 13pt; }
-.age-icon { width: 0.6in; height: 0.6in; object-fit: contain; }
-.age-badge { display: inline-flex; align-items: center; justify-content: center; width: 0.35in; height: 0.35in; border-radius: 50%; font-size: 14pt; }
-.age-badge.age-youngster { background: #fde9b5; }
-.age-badge.age-unc { background: #f1d4c4; }
-.pin { position: absolute; width: 0.16in; height: 0.16in; border: 1.5px solid #bbb; border-radius: 50%; }
-.pin.tl { top: 0.12in; left: 0.12in; } .pin.tr { top: 0.12in; right: 0.12in; }
-.pin.bl { bottom: 0.12in; left: 0.12in; } .pin.br { bottom: 0.12in; right: 0.12in; }
-.leaf { width: 0.3in; height: 0.3in; display: inline-block; }
-.leaf svg { width: 100%; height: 100%; }
+.bib-num.n3 { font-size: 2.4in; }
+.bib-num.n4 { font-size: 1.95in; }
+.bib-num.n5 { font-size: 1.6in; letter-spacing: 0; }
+.bib-name {
+  position: absolute; left: 18%; right: 18%; top: 66.5%;
+  text-align: center; font-family: 'Arial Black', 'Helvetica Neue', Arial, sans-serif; font-weight: 900;
+  font-size: 30pt; letter-spacing: 0.06em; color: #2b2626;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.bib-name.blank { left: 28%; right: 28%; top: 73%; height: 0; border-bottom: 2px solid #8a7f76; }
+.bib-team { position: absolute; left: 5.5%; bottom: 7.5%; display: flex; flex-direction: column; line-height: 1; }
+.team-word { font-family: Arial, sans-serif; font-weight: 800; font-size: 12pt; letter-spacing: 0.35em; color: #8B0D1A; margin: 0 0 0.04in 0.08in; }
+.team-name {
+  font-family: 'Arial Black', 'Helvetica Neue', Arial, sans-serif; font-weight: 900; font-style: italic;
+  color: #FF6A0D; font-size: 50pt; letter-spacing: -0.01em;
+}
+.team-youngster .team-name { font-size: 32pt; }
+.team-pick { font-family: Arial, sans-serif; font-weight: 900; font-size: 16pt; color: #FF6A0D; }
 
 @media print {
   body { background: #fff; }
