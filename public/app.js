@@ -362,7 +362,15 @@ function frame() {
   const text = fmtTime(shown);
   if (text !== lastClockText) {
     lastClockText = text;
-    $$('[data-clock]').forEach((n) => (n.textContent = text));
+    // data-cells clocks use a display font without tabular digits, so each character
+    // sits in its own fixed-width cell and the clock never jiggles as it ticks.
+    const cells = text.replace(/./g, (c) => (/\d/.test(c) ? `<i>${c}</i>` : `<i class="sep">${c}</i>`));
+    $$('[data-clock]').forEach((n) => {
+      if (n.hasAttribute('data-cells')) {
+        n.innerHTML = cells;
+        n.setAttribute('aria-label', text);
+      } else n.textContent = text;
+    });
   }
   // Countdown overlay: 5-4-3-2-1 then GO for ~1.2s, from the shared start time.
   let cd = '';
@@ -394,13 +402,15 @@ function renderClockStatus() {
     cls = 'ended';
   } else if (r.start_at_ms != null) {
     const el = raceElapsed();
-    text = el != null && el < 0 ? 'Get ready…' : 'Race in progress';
-    cls = 'running';
+    const counting = el != null && el < 0;
+    text = counting ? 'Get ready…' : 'Race in progress';
+    cls = counting ? 'getready' : 'running';
   }
   const s = $('#clockStatus');
   s.textContent = text;
   s.className = 'clock-status ' + cls;
   $('#bigClock').className = 'big-clock ' + cls;
+  document.body.dataset.race = cls;
 }
 
 // --- Hidden start: double-tap, then within 1.5s press & hold 3s ---
@@ -597,7 +607,7 @@ async function raceAction(path, body) {
 }
 
 // ================================================================
-// Home: "Someone Finished" button, offline-safe stamping
+// Home: "Somebody Finished" button, offline-safe stamping
 // ================================================================
 const PENDING_KEY = 'tt_pending_v1';
 function loadPending() {
@@ -1265,6 +1275,25 @@ const LEAVES_SVG = `<svg viewBox="0 0 220 220" aria-hidden="true"><defs>
   <use href="#maple" fill="url(#lgC)" opacity=".85" transform="translate(-6 96) rotate(-52 50 50) scale(.66)"/>
 </svg>`;
 $$('[data-leaves]').forEach((el) => (el.innerHTML = LEAVES_SVG));
+
+// Home background: a few maple leaves drifting down. Pure CSS animation on transforms
+// (cheap on phones); CSS hides the extras on small screens and stops them for reduced motion.
+(function fallingLeaves() {
+  const host = $('.home-fall');
+  if (!host) return;
+  const colors = ['#E8731F', '#F7B733', '#C8501E', '#EE9A5C', '#E0A526', '#B8401A'];
+  const n = 14;
+  let html = '';
+  for (let i = 0; i < n; i++) {
+    const size = 16 + Math.random() * 22;
+    const dur = 13 + Math.random() * 12;
+    html += `<span class="fall" style="--x:${(((i + Math.random()) / n) * 100).toFixed(1)}%;--s:${size.toFixed(0)}px;` +
+      `--d:${dur.toFixed(1)}s;--delay:${(-Math.random() * dur).toFixed(1)}s;--sway:${(20 + Math.random() * 50).toFixed(0)}px;` +
+      `--spin:${Math.random() < 0.5 ? -1 : 1};--o:${(0.35 + Math.random() * 0.35).toFixed(2)}">` +
+      `<svg viewBox="0 0 100 100"><path d="${MAPLE}" fill="${colors[i % colors.length]}"/></svg></span>`;
+  }
+  host.innerHTML = html;
+})();
 
 function renderLeaderboard() {
   const rows = leaderboardRows();

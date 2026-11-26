@@ -16,27 +16,76 @@
   <span id="netDot" class="net-dot" title="Connection"></span>
 
   <main>
-    <!-- CLOCK -->
+    <!-- HOME (clock): cream title band, framed race timer, big finish button, nav -->
     <section id="view-clock" class="view">
-      <div class="clock-wrap">
-        <div class="clock-label">Race Timer</div>
-        <div id="bigClock" class="big-clock" data-clock>0:00:00.0</div>
-        <div class="hold-bar"><div id="holdFill" class="hold-fill"></div></div>
-        <div id="clockStatus" class="clock-status">Waiting for the start</div>
-      </div>
-      <div class="home-actions">
-        <button id="finishBtn" class="home-finish" type="button">Someone Finished</button>
-        <div id="syncStatus" class="sync-status" hidden></div>
-        <ul id="myStamps" class="my-stamps"></ul>
-        <details id="otherStampsWrap" class="other-stamps" hidden>
-          <summary id="otherStampsLabel"></summary>
-          <ul id="otherStamps" class="my-stamps"></ul>
-        </details>
-        <a class="home-runners" href="#/runners">See / Add Runners</a>
-        <div class="home-links">
-          <a href="#/leaderboard">Leaderboard</a>
-          <button id="raceMenuBtn" class="link-btn" aria-label="Race controls">⋯</button>
+      <div class="home-fall" aria-hidden="true"></div>
+
+      <header class="home-hero">
+        <span class="home-leaves home-leaves-l" data-leaves></span>
+        <span class="home-leaves home-leaves-r" data-leaves></span>
+        <h1 class="home-title">Turkey Trot <span data-year></span></h1>
+        <div class="lb-badge-row home-badge-row">
+          <span class="lb-rays lb-rays-l"></span>
+          <span class="lb-badge">5K</span>
+          <span class="lb-rays lb-rays-r"></span>
         </div>
+        <svg class="home-hero-edge" viewBox="0 0 1440 40" preserveAspectRatio="none" aria-hidden="true">
+          <path d="M0 0 H1440 V14 C 1080 34 720 2 360 22 C 220 30 90 26 0 18 Z" fill="#FBF3E4"/>
+          <path d="M0 18 C 90 26 220 30 360 22 C 720 2 1080 34 1440 14" fill="none" stroke="#E0A526" stroke-width="5"/>
+        </svg>
+      </header>
+
+      <div class="home-body">
+        <div class="frame timer-frame">
+          <div class="frame-in clock-wrap">
+            <div class="timer-label"><span>Race Timer</span></div>
+            <div id="bigClock" class="big-clock" data-clock data-cells aria-live="off">0:00:00.0</div>
+            <div class="hold-bar"><div id="holdFill" class="hold-fill"></div></div>
+            <div id="clockStatus" class="clock-status">Waiting for the start</div>
+          </div>
+        </div>
+
+        <div class="home-actions">
+          <button id="finishBtn" class="home-finish" type="button" aria-label="Somebody finished">
+            <span class="hf-in">
+              <svg class="hf-flag" viewBox="0 0 64 64" aria-hidden="true">
+                <defs><pattern id="chk" width="16" height="16" patternUnits="userSpaceOnUse" patternTransform="skewY(-8)">
+                  <rect width="16" height="16" fill="#FFF6E8"/><rect width="8" height="8" fill="#7A1426"/><rect x="8" y="8" width="8" height="8" fill="#7A1426"/></pattern></defs>
+                <path d="M15 12 C 26 6 34 16 46 10 C 50 8 54 8 58 9 L 54 36 C 46 34 40 40 30 40 C 24 40 20 37 15 39 Z" fill="url(#chk)" stroke="#FFF6E8" stroke-width="2.4" stroke-linejoin="round"/>
+                <path d="M15 10 L 7 60" stroke="#FFF6E8" stroke-width="4" stroke-linecap="round"/>
+                <circle cx="15.5" cy="8" r="3" fill="#FFF6E8"/>
+              </svg>
+              <span class="hf-rule"></span>
+              <span class="hf-text">Somebody<br>Finished</span>
+            </span>
+          </button>
+          <div id="syncStatus" class="sync-status" hidden></div>
+          <ul id="myStamps" class="my-stamps"></ul>
+          <details id="otherStampsWrap" class="other-stamps" hidden>
+            <summary id="otherStampsLabel"></summary>
+            <ul id="otherStamps" class="my-stamps"></ul>
+          </details>
+        </div>
+
+        <nav class="home-nav">
+          <a class="home-nav-btn" href="#/leaderboard">
+            <svg class="hn-icon hn-trophy" viewBox="0 0 48 48" aria-hidden="true">
+              <path d="M14 6 H34 V18 C34 26 29 30 24 30 C19 30 14 26 14 18 Z" fill="#E8A92A"/>
+              <path d="M14 10 H7 C7 18 10 22 15 22 M34 10 H41 C41 18 38 22 33 22" fill="none" stroke="#E8A92A" stroke-width="3.4" stroke-linecap="round"/>
+              <path d="M21 30 H27 L28 37 H20 Z" fill="#E8A92A"/><rect x="14" y="37" width="20" height="6" rx="1.5" fill="#E8A92A"/>
+            </svg>
+            <span class="hn-label">Leaderboard</span><span class="hn-chev">›</span>
+          </a>
+          <a class="home-nav-btn" href="#/runners">
+            <svg class="hn-icon" viewBox="0 0 48 48" aria-hidden="true" fill="none" stroke="#FFF6E8" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="24" cy="15" r="6"/><path d="M12 38 C12 30 17 25 24 25 C31 25 36 30 36 38 Z"/>
+              <circle cx="11" cy="19" r="4"/><path d="M3 36 C3 31 6 28 10 28"/>
+              <circle cx="37" cy="19" r="4"/><path d="M45 36 C45 31 42 28 38 28"/>
+            </svg>
+            <span class="hn-label">See / Add<br>Runners</span><span class="hn-chev">›</span>
+          </a>
+        </nav>
+        <button id="raceMenuBtn" class="link-btn home-menu" aria-label="Race controls">⋯</button>
       </div>
     </section>
 
