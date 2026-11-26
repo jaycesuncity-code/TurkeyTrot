@@ -7,6 +7,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <title>Turkey Trot 5K · Race Timer</title>
   <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kanit:ital,wght@0,700;0,800;1,700;1,800;1,900&display=swap">
   <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
@@ -82,36 +85,38 @@
       </div>
     </section>
 
-    <!-- LEADERBOARD -->
+    <!-- LEADERBOARD: one board, built to be screenshotted. Header, column titles and
+         footer stay put; only the finisher list scrolls when it is longer than the screen. -->
     <section id="view-leaderboard" class="view" hidden>
-      <a class="back chrome" href="#/clock">‹ Clock</a>
-      <div class="lb-controls chrome">
-        <div class="chips" id="lbChips">
-          <button class="chip on" data-filter="all">All</button>
-          <button class="chip" data-filter="youngster">Youngster</button>
-          <button class="chip" data-filter="unc">Unc</button>
-        </div>
-        <button id="shotBtn" class="btn btn-ghost btn-small" type="button">📸 Screenshot mode</button>
-      </div>
-      <div class="lb-stage">
-        <div id="lbCard" class="lb-card">
-          <div class="lb-head">
-            <span class="turkey turkey-lg" data-turkey></span>
-            <div>
-              <div class="lb-title">Turkey Trot 5K</div>
-              <div class="lb-sub"><span data-year></span> · <span id="lbFilterLabel">Overall</span></div>
-            </div>
-            <span class="leaf" data-leaf></span>
+      <div class="lb">
+        <a class="lb-back" href="#/clock" aria-label="Back to the clock">‹</a>
+        <span class="lb-leaves lb-leaves-l" data-leaves></span>
+        <span class="lb-leaves lb-leaves-r" data-leaves></span>
+
+        <header class="lb-hero">
+          <h1 class="lb-title">Turkey Trot <span data-year></span></h1>
+          <div class="lb-badge-row">
+            <span class="lb-rays lb-rays-l"></span>
+            <span class="lb-badge">5K</span>
+            <span class="lb-rays lb-rays-r"></span>
+          </div>
+          <div class="lb-subtitle"><span>Official Leaderboard</span></div>
+        </header>
+
+        <div class="lb-table">
+          <div class="lb-cols" role="row">
+            <span>Place</span><span>Participant</span><span>Finish Time</span><span>Avg Pace</span>
           </div>
           <ol id="lbRows" class="lb-rows"></ol>
-          <div class="lb-foot"><span>Sun City Plumbing &amp; Heating</span><span id="lbPageLabel"></span></div>
         </div>
+
+        <footer class="lb-wave" aria-hidden="true">
+          <svg viewBox="0 0 1440 90" preserveAspectRatio="none">
+            <path d="M0 34 C 360 -6 1080 74 1440 22 L1440 90 L0 90 Z" fill="#E0A526"/>
+            <path d="M0 50 C 380 14 1060 86 1440 40 L1440 90 L0 90 Z" fill="#7A1426"/>
+          </svg>
+        </footer>
       </div>
-      <div class="lb-pager">
-        <button id="lbPrev" class="btn btn-ghost btn-small" type="button">‹ Prev</button>
-        <button id="lbNext" class="btn btn-ghost btn-small" type="button">Next ›</button>
-      </div>
-      <button id="shotExit" class="shot-exit" type="button" aria-label="Exit screenshot mode">✕</button>
     </section>
   </main>
 

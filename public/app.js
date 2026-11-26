@@ -16,8 +16,6 @@ const S = {
   view: 'clock',
   editingRunnerId: null,
   rev: null,
-  lbFilter: 'all',
-  lbPage: 0,
 };
 
 // ================================================================
@@ -202,7 +200,6 @@ function route() {
   VIEWS.forEach((v) => ($('#view-' + v).hidden = v !== S.view));
   $$('.tabbar a').forEach((a) => a.classList.toggle('on', a.dataset.tab === S.view));
   document.body.dataset.view = S.view;
-  if (S.view !== 'leaderboard') setScreenshotMode(false);
   lastSig = {};
   renderData();
   updateWakeLock();
@@ -1171,56 +1168,66 @@ $('#clearAllBtn').addEventListener('click', async () => {
 // ================================================================
 // Leaderboard
 // ================================================================
+const FIVE_K_MILES = 3.10686;
+
 function leaderboardRows() {
   return S.runners
-    .filter((r) => r.finish_ms != null && (S.lbFilter === 'all' || r.age_group === S.lbFilter))
+    .filter((r) => r.finish_ms != null)
     .sort((a, b) => a.finish_ms - b.finish_ms || (a.stamp_created_at || 0) - (b.stamp_created_at || 0) || a.id - b.id);
 }
 
+// Average pace per mile over a 5K, e.g. 1122000 ms -> "6:01/mi"
+function fmtPace(ms) {
+  const sec = Math.round(ms / 1000 / FIVE_K_MILES);
+  return `${Math.floor(sec / 60)}:${pad2(sec % 60)}/mi`;
+}
+
+// Gold/silver/bronze laurel half; the right side is the same branch mirrored.
+function laurel(side) {
+  const leaves = [[19, 52, -58], [13, 42, -38], [10, 31, -18], [10, 20, 4], [13, 10, 26]]
+    .map(([x, y, r]) => `<ellipse cx="${x}" cy="${y}" rx="3.2" ry="7" transform="rotate(${r} ${x} ${y})"/>`)
+    .join('');
+  const inner = [[22, 42, 40], [18, 31, 25], [17, 20, 12]]
+    .map(([x, y, r]) => `<ellipse cx="${x}" cy="${y}" rx="2.4" ry="5.5" transform="rotate(${r} ${x} ${y})"/>`)
+    .join('');
+  const flip = side === 'r' ? ' transform="translate(30 0) scale(-1 1)"' : '';
+  return `<svg class="laurel laurel-${side}" viewBox="0 0 30 64" aria-hidden="true"><g fill="currentColor"${flip}>` +
+    `<path d="M24 60 Q8 40 14 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>${leaves}${inner}</g></svg>`;
+}
+
+const MAPLE = 'M50 2 L56 20 L66 14 L63 34 L80 22 L78 32 L96 30 L86 44 L94 48 L70 64 L74 72 L54 70 L52 98 L48 98 L46 70 L26 72 L30 64 L6 48 L14 44 L4 30 L22 32 L20 22 L37 34 L34 14 L44 20 Z';
+const LEAVES_SVG = `<svg viewBox="0 0 220 220" aria-hidden="true"><defs>
+  <path id="maple" d="${MAPLE}"/>
+  <linearGradient id="lgA" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#E8731F"/><stop offset="1" stop-color="#B8401A"/></linearGradient>
+  <linearGradient id="lgB" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F7B733"/><stop offset="1" stop-color="#E07B1A"/></linearGradient>
+  <linearGradient id="lgC" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F8C9A0"/><stop offset="1" stop-color="#EE9A5C"/></linearGradient></defs>
+  <use href="#maple" fill="url(#lgA)" transform="translate(-14 -18) rotate(-28 50 50) scale(1.15)"/>
+  <use href="#maple" fill="url(#lgB)" transform="translate(78 -26) rotate(22 50 50) scale(.8)"/>
+  <use href="#maple" fill="url(#lgC)" opacity=".9" transform="translate(92 56) rotate(48 50 50) scale(.62)"/>
+  <use href="#maple" fill="url(#lgC)" opacity=".85" transform="translate(-6 96) rotate(-52 50 50) scale(.66)"/>
+</svg>`;
+$$('[data-leaves]').forEach((el) => (el.innerHTML = LEAVES_SVG));
+
 function renderLeaderboard() {
   const rows = leaderboardRows();
-  const size = CONFIG.leaderboardPageSize;
-  const pages = Math.max(1, Math.ceil(rows.length / size));
-  S.lbPage = Math.min(S.lbPage, pages - 1);
-  const start = S.lbPage * size;
-  const pageRows = rows.slice(start, start + size);
-  $('#lbFilterLabel').textContent = S.lbFilter === 'all' ? 'Overall' : AGE_GROUPS[S.lbFilter].label + ' division';
-  $('#lbRows').innerHTML = pageRows.length
-    ? pageRows
+  // Times show as H:MM:SS like the race board; tenths appear only where two shown times would look tied.
+  const short = rows.map((r) => fmtTime(r.finish_ms, false));
+  $('#lbRows').innerHTML = rows.length
+    ? rows
         .map((r, i) => {
-          const rank = start + i + 1;
-          const medal = rank <= 3 ? ` medal-${rank}` : '';
-          return `<li class="lb-row${medal}">
-            <span class="lb-rank">${rank}</span>
-            ${ageIcon(r.age_group, 'lb-icon')}
-            <span class="lb-name">${escapeHtml(fullName(r))}</span>
-            <span class="lb-time">${fmtTime(r.finish_ms)}</span>
+          const rank = i + 1;
+          const tied = short[i] === short[i - 1] || short[i] === short[i + 1];
+          const place = rank <= 3 ? `${laurel('l')}<b>${rank}</b>${laurel('r')}` : `<b>${rank}</b>`;
+          return `<li class="lb-row${rank <= 3 ? ` medal medal-${rank}` : ''}">
+            <span class="lb-place">${place}</span>
+            <span class="lb-who"><span class="lb-name">${escapeHtml(fullName(r))}</span>${ageIcon(r.age_group, 'lb-icon')}</span>
+            <span class="lb-time">${tied ? fmtTime(r.finish_ms) : short[i]}</span>
+            <span class="lb-pace">${fmtPace(r.finish_ms)}</span>
           </li>`;
         })
         .join('')
     : `<li class="lb-empty">${S.loadedFull ? 'No finishers yet. Go go go! 🦃' : 'Loading…'}</li>`;
-  $('#lbPageLabel').textContent = pages > 1 ? `Page ${S.lbPage + 1} of ${pages}` : '';
-  $('#lbPrev').disabled = S.lbPage === 0;
-  $('#lbNext').disabled = S.lbPage >= pages - 1;
-  $('.lb-pager').hidden = pages <= 1;
 }
-
-$('#lbChips').addEventListener('click', (e) => {
-  const b = e.target.closest('[data-filter]');
-  if (!b) return;
-  S.lbFilter = b.dataset.filter;
-  S.lbPage = 0;
-  $$('#lbChips .chip').forEach((c) => c.classList.toggle('on', c === b));
-  renderLeaderboard();
-});
-$('#lbPrev').addEventListener('click', () => { S.lbPage--; renderLeaderboard(); });
-$('#lbNext').addEventListener('click', () => { S.lbPage++; renderLeaderboard(); });
-
-function setScreenshotMode(on) {
-  document.body.classList.toggle('shot', on);
-}
-$('#shotBtn').addEventListener('click', () => setScreenshotMode(true));
-$('#shotExit').addEventListener('click', () => setScreenshotMode(false));
 
 // ================================================================
 // Rendering (only redraw lists when their data changed, so inputs aren't disturbed)
