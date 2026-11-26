@@ -191,9 +191,11 @@ body[data-view="leaderboard"] main { max-width: none; padding: 0; }
   display: flex; flex-direction: column; padding-top: env(safe-area-inset-top);
 }
 .lb-back {
-  position: absolute; z-index: 5; top: calc(6px + env(safe-area-inset-top)); left: 6px;
-  width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
-  font-size: 2rem; line-height: 1; color: var(--lb-maroon); text-decoration: none; opacity: .35;
+  position: absolute; z-index: 5; top: calc(10px + env(safe-area-inset-top)); left: 10px;
+  width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  background: var(--lb-maroon); color: #fff; text-decoration: none;
+  font-size: 2.4rem; font-weight: 700; line-height: 1; padding-bottom: 5px; padding-right: 3px;
+  box-shadow: 0 2px 8px rgba(67,16,28,.3), 0 0 0 2px rgba(255,255,255,.8);
 }
 .lb-leaves { position: absolute; top: -6px; z-index: 0; width: min(26vw, 26vh, 300px); pointer-events: none; }
 .lb-leaves svg { display: block; width: 100%; height: auto; }
@@ -282,6 +284,8 @@ body[data-view="leaderboard"] main { max-width: none; padding: 0; }
 .medal-2 .laurel { color: #9b9b9b; }
 .medal-3 .laurel { color: #B0612A; }
 @media (max-width: 640px) {
+  .lb-hero { padding-left: 54px; padding-right: 54px; }
+  .lb-title { font-size: min(7.4vw, 11vh); }
   .lb { --lb-cols: 2.7em minmax(0, 1fr) auto auto; }
   .lb-cols, .lb-row { column-gap: .7em; }
   .lb-cols { padding-left: .5em; padding-right: .7em; }
