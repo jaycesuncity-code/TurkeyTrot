@@ -600,8 +600,3 @@ body[data-view="clock"] .net-dot { box-shadow: 0 0 0 2px rgba(122,20,38,.35); }
   .home-nav-btn { padding-left: .55em; padding-right: .55em; gap: .4em; }
   .hn-icon { width: 1.55em; height: 1.55em; }
 }
-.home-menu {
-  align-self: center; margin-top: -6px; padding: 2px 16px; background: none; border: 0; cursor: pointer;
-  color: rgba(255,212,110,.45); font-size: 1.3rem; line-height: 1;
-}
-.link-btn { background: none; border: 0; cursor: pointer; }

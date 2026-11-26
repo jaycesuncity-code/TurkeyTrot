@@ -412,7 +412,8 @@ function renderClockStatus() {
   document.body.dataset.race = cls;
 }
 
-// --- Hidden start: double-tap, then within 1.5s press & hold 3s ---
+// --- Hidden gesture on the clock: double-tap, then within 1.5s press & hold 3s.
+// Before the start it opens the start slider; after that it opens race controls (End / Resume / Reset). ---
 (function setupEasterEgg() {
   const el = $('#bigClock');
   const fill = $('#holdFill');
@@ -428,8 +429,6 @@ function renderClockStatus() {
   let holdStart = 0;
   let raf = null;
 
-  const canStart = () => S.race.start_at_ms == null;
-
   function drawHold() {
     if (!holding) return;
     const p = Math.min(1, (performance.now() - holdStart) / HOLD_MS);
@@ -444,7 +443,8 @@ function renderClockStatus() {
     holdTimer = setTimeout(() => {
       resetHold();
       armedUntil = 0;
-      if (canStart()) openStartModal();
+      if (S.race.start_at_ms == null) openStartModal();
+      else openRaceControls();
     }, HOLD_MS);
   }
   function resetHold() {
@@ -456,7 +456,6 @@ function renderClockStatus() {
   }
 
   el.addEventListener('pointerdown', (e) => {
-    if (!canStart()) return;
     e.preventDefault();
     try { el.setPointerCapture(e.pointerId); } catch {}
     const now = performance.now();
@@ -564,7 +563,7 @@ async function startRace() {
 }
 
 // Race controls menu (End / Resume / Reset)
-$('#raceMenuBtn').addEventListener('click', async () => {
+async function openRaceControls() {
   const r = S.race;
   const started = r.start_at_ms != null;
   const ended = r.end_at_ms != null;
@@ -592,7 +591,7 @@ $('#raceMenuBtn').addEventListener('click', async () => {
     if (!(await confirmDialog('Reset the race?', 'This clears the start time and <b>every finish time</b>. Runners stay. This cannot be undone.', 'Reset race', true))) return;
     await raceAction('/api/reset', { scope: 'race' });
   }
-});
+}
 
 async function raceAction(path, body) {
   try {
