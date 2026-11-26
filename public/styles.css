@@ -175,10 +175,10 @@ body[data-view="leaderboard"] main { max-width: none; padding: 0; }
   font-size: 2.4rem; font-weight: 700; line-height: 1; padding-bottom: 5px; padding-right: 3px;
   box-shadow: 0 2px 8px rgba(67,16,28,.3), 0 0 0 2px rgba(255,255,255,.8);
 }
-.lb-leaves { position: absolute; top: -6px; z-index: 0; width: min(26vw, 26vh, 300px); pointer-events: none; }
+.lb-leaves { position: absolute; top: calc(2px + env(safe-area-inset-top)); z-index: 0; width: min(26vw, 26vh, 300px); pointer-events: none; }
 .lb-leaves svg { display: block; width: 100%; height: auto; }
-.lb-leaves-l { left: -10px; }
-.lb-leaves-r { right: -10px; transform: scaleX(-1); }
+.lb-leaves-l { left: 2px; }
+.lb-leaves-r { right: 2px; transform: scaleX(-1); }
 
 .lb-hero { position: relative; z-index: 1; text-align: center; padding: min(3vh, 26px) 12px min(1.6vh, 14px); flex: none; }
 .lb-title {

@@ -1282,12 +1282,14 @@ const LEAVES_SVG = `<svg viewBox="0 0 220 220" aria-hidden="true"><defs>
   <linearGradient id="lgA" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#E8731F"/><stop offset="1" stop-color="#B8401A"/></linearGradient>
   <linearGradient id="lgB" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F7B733"/><stop offset="1" stop-color="#E07B1A"/></linearGradient>
   <linearGradient id="lgC" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F8C9A0"/><stop offset="1" stop-color="#EE9A5C"/></linearGradient></defs>
-  <use href="#maple" fill="url(#lgA)" transform="translate(-14 -18) rotate(-28 50 50) scale(1.15)"/>
-  <use href="#maple" fill="url(#lgB)" transform="translate(78 -26) rotate(22 50 50) scale(.8)"/>
-  <use href="#maple" fill="url(#lgC)" opacity=".9" transform="translate(92 56) rotate(48 50 50) scale(.62)"/>
-  <use href="#maple" fill="url(#lgC)" opacity=".85" transform="translate(-6 96) rotate(-52 50 50) scale(.66)"/>
+  <use href="#maple" fill="url(#lgA)" transform="translate(62 62) rotate(-28) scale(.95) translate(-50 -50)"/>
+  <use href="#maple" fill="url(#lgB)" transform="translate(152 50) rotate(22) scale(.7) translate(-50 -50)"/>
+  <use href="#maple" fill="url(#lgC)" opacity=".9" transform="translate(170 132) rotate(48) scale(.52) translate(-50 -50)"/>
+  <use href="#maple" fill="url(#lgC)" opacity=".85" transform="translate(52 162) rotate(-52) scale(.52) translate(-50 -50)"/>
 </svg>`;
-$$('[data-leaves]').forEach((el) => (el.innerHTML = LEAVES_SVG));
+// Each copy gets its own ids: shared ids would point the visible copy at the gradients
+// inside a hidden screen's copy, and the leaves would not draw.
+$$('[data-leaves]').forEach((el, i) => (el.innerHTML = LEAVES_SVG.replace(/(id="|#)(maple|lg[ABC])\b/g, `$1$2-${i}`)));
 
 // Home background: a few maple leaves drifting down. Pure CSS animation on transforms
 // (cheap on phones); CSS hides the extras on small screens and stops them for reduced motion.
