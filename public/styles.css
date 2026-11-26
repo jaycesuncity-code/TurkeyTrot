@@ -378,3 +378,7 @@ body[data-view="clock"] main { min-height: 100vh; min-height: 100dvh; display: f
 .pill-name { font-weight: 700; line-height: 1.15; overflow-wrap: break-word; min-width: 0; font-size: .98rem; }
 .pill-name b { font-weight: 800; color: var(--orange); }
 .pill.on .pill-name b { color: var(--gold); }
+.pill-new { background: transparent; color: var(--maroon); box-shadow: inset 0 0 0 2px var(--gold); }
+.pill-plus { width: 34px; height: 34px; border-radius: 50%; background: var(--gold); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-weight: 900; font-size: 1.2rem; flex-shrink: 0; }
+.pill-none { margin: 0 0 8px; }
+.input-initial { max-width: 130px; }
