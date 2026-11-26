@@ -39,10 +39,10 @@ body { margin: 0; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Ari
   color: var(--maroon); font-size: 2.6in; letter-spacing: -0.02em; font-variant-numeric: tabular-nums;
 }
 .bib-num.n4 { font-size: 2.1in; }
-.bib-num.n5 { font-size: 1.7in; }
+.bib-num.n5 { font-size: 1.7in; letter-spacing: 0.01em; }
 .bib-name { font-size: 26pt; font-weight: 800; text-align: center; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .bib-name.blank { width: 70%; border-bottom: 2px solid #bbb; height: 0.45in; }
-.bib-foot { width: 100%; display: flex; justify-content: space-between; align-items: center; margin-top: 0.1in; font-size: 11pt; font-weight: 700; color: var(--maroon); }
+.bib-foot { width: 100%; display: flex; justify-content: center; align-items: center; margin-top: 0.1in; font-size: 11pt; font-weight: 700; color: var(--maroon); }
 .bib-group { display: flex; align-items: center; gap: 0.08in; font-size: 13pt; }
 .age-icon { width: 0.6in; height: 0.6in; object-fit: contain; }
 .age-badge { display: inline-flex; align-items: center; justify-content: center; width: 0.35in; height: 0.35in; border-radius: 50%; font-size: 14pt; }

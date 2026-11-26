@@ -1,5 +1,6 @@
 'use strict';
 let runners = [];
+const blankNums = [];
 
 
 function oneBib(b) {
@@ -14,7 +15,7 @@ function oneBib(b) {
     <div class="bib-band"><span class="turkey">${TURKEY_SVG}</span>Turkey Trot 5K · ${CONFIG.year}<span class="turkey">${TURKEY_SVG}</span></div>
     <div class="bib-num ${sizeClass}">${escapeHtml(numStr)}</div>
     ${name}
-    <div class="bib-foot">${group}<span><span class="leaf">${LEAF_SVG}</span> Sun City Plumbing &amp; Heating</span></div>
+    <div class="bib-foot">${group}</div>
   </div>`;
 }
 
@@ -26,8 +27,13 @@ function render() {
       ? (a.last_name || '').localeCompare(b.last_name || '') || (a.first_name || '').localeCompare(b.first_name || '')
       : (a.bib ?? 1e9) - (b.bib ?? 1e9)
   );
-  let next = runners.reduce((m, r) => Math.max(m, r.bib || 0), 0) + 1;
-  for (let i = 0; i < blanks; i++) list.push({ blank: true, bib: next++ });
+  // Blank bibs get random unused 5-digit numbers, kept stable while you adjust the count.
+  const used = new Set(runners.map((r) => r.bib));
+  while (blankNums.length < blanks) {
+    const n = 10000 + Math.floor(Math.random() * 90000);
+    if (!used.has(n) && !blankNums.includes(n)) blankNums.push(n);
+  }
+  for (let i = 0; i < blanks; i++) list.push({ blank: true, bib: blankNums[i] });
 
   const sheets = [];
   for (let i = 0; i < list.length; i += 2) {
@@ -36,7 +42,7 @@ function render() {
   document.getElementById('sheets').innerHTML = sheets.join('');
   document.getElementById('summary').textContent = list.length
     ? `${list.length} bib${list.length > 1 ? 's' : ''} on ${sheets.length} sheet${sheets.length > 1 ? 's' : ''}.` +
-      (blanks ? ` Blank bibs use the next numbers; enter that number as the Bib # when you add a walk-up runner.` : '')
+      (blanks ? ` Each blank bib has its own number; enter it as the Bib # when you add a walk-up runner.` : '')
     : 'No runners yet. Add runners first, or add blank bibs.';
 }
 
