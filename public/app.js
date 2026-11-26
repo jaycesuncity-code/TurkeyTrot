@@ -910,7 +910,8 @@ async function pickRunner(id) {
   const picked = await openModal(
     `<h2>Who finished at <span class="mono">${fmtTime(s.elapsed_ms)}</span>?</h2>
      ${list.length > 16 ? '<input class="input pill-search" type="search" placeholder="Search" autocomplete="off">' : ''}
-     <div class="pill-grid">${list.length ? list.map(pill).join('') : '<div class="empty">Everyone already has a time. Add runners from See / Add Runners.</div>'}</div>
+     ${list.length ? '' : '<div class="hint pill-none">Everyone on the list already has a time. Add this runner here:</div>'}
+     <div class="pill-grid">${list.map(pill).join('')}<button type="button" class="pill pill-new" data-act="new"><span class="pill-plus">＋</span><span class="pill-name">New runner</span></button></div>
      <div class="sheet-foot">
        ${current != null ? '<button class="link-quiet" data-act="clear">Not them, clear name</button>' : '<span></span>'}
        <button class="link-quiet" data-act="cancel">Cancel</button>
@@ -921,12 +922,13 @@ async function pickRunner(id) {
         box.querySelector('[data-act=cancel]').onclick = () => closeModal(null);
         const clr = box.querySelector('[data-act=clear]');
         if (clr) clr.onclick = () => closeModal('clear');
-        box.querySelectorAll('.pill').forEach((b) => (b.onclick = () => closeModal(Number(b.dataset.runner))));
+        box.querySelectorAll('.pill[data-runner]').forEach((b) => (b.onclick = () => closeModal(Number(b.dataset.runner))));
+        box.querySelector('[data-act=new]').onclick = () => closeModal('new');
         const q = box.querySelector('.pill-search');
         if (q)
           q.oninput = () => {
             const t = q.value.trim().toLowerCase();
-            box.querySelectorAll('.pill').forEach((b) => {
+            box.querySelectorAll('.pill[data-runner]').forEach((b) => {
               b.hidden = t && !b.textContent.toLowerCase().replace(/\s+/g, ' ').includes(t);
             });
           };
@@ -934,9 +936,65 @@ async function pickRunner(id) {
     }
   );
   if (picked == null) return;
+  if (picked === 'new') return addRunnerForStamp(id);
   const runnerId = picked === 'clear' ? null : picked;
   if (runnerId === current) return;
   assignStamp(id, runnerId);
+}
+
+// Add a runner who isn't on the list yet, then give them this time.
+async function addRunnerForStamp(id) {
+  const s = findStamp(id);
+  if (!s) return;
+  const body = await openModal(
+    `<h2>New runner at <span class="mono">${fmtTime(s.elapsed_ms)}</span></h2>
+     <form data-act="form" class="form" autocomplete="off">
+       <div class="form-row">
+         <input name="first_name" class="input" placeholder="First name" required>
+         <input name="last_name" class="input input-initial" placeholder="Last initial" maxlength="1" autocapitalize="characters">
+       </div>
+       <div class="toggle new-age">
+         <button type="button" data-value="youngster" class="on">Youngster</button>
+         <button type="button" data-value="unc">Unc</button>
+       </div>
+       <div class="modal-actions">
+         <button type="button" class="btn btn-ghost" data-act="cancel">Cancel</button>
+         <button type="submit" class="btn btn-primary">Add &amp; give them this time</button>
+       </div>
+     </form>`,
+    {
+      onOpen: (box) => {
+        const f = box.querySelector('form');
+        setTimeout(() => f.first_name.focus(), 50);
+        box.querySelectorAll('.new-age button').forEach(
+          (b) => (b.onclick = () => box.querySelectorAll('.new-age button').forEach((x) => x.classList.toggle('on', x === b)))
+        );
+        box.querySelector('[data-act=cancel]').onclick = () => closeModal(null);
+        f.onsubmit = (e) => {
+          e.preventDefault();
+          if (!f.first_name.value.trim()) return;
+          closeModal({
+            first_name: f.first_name.value,
+            last_name: f.last_name.value,
+            age_group: box.querySelector('.new-age button.on').dataset.value,
+          });
+        };
+      },
+    }
+  );
+  if (!body) return;
+  if (!(await requireAuth('addRunner'))) return;
+  try {
+    const before = new Set(S.runners.map((r) => r.id));
+    const d = await api('/api/runners', { method: 'POST', body });
+    const added = (d.runners || []).filter((r) => !before.has(r.id)).sort((a, b) => b.id - a.id)[0];
+    if (!added) throw new Error('Runner was not created');
+    S.runners = d.runners;
+    await assignStamp(id, added.id);
+  } catch (err) {
+    toast("Couldn't add runner: " + escapeHtml(err.message));
+    poll();
+  }
 }
 
 async function deleteStamp(id) {
