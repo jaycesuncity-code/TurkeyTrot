@@ -6,7 +6,7 @@ export async function onRequestGet({ env }) {
 
 // POST /api/runners {first_name, last_name, age_group, bib?}
 // POST /api/runners {runners: [ ...same shape... ]}   (bulk add)
-// Bibs are auto-numbered (highest + 1) when not given.
+// Bibs get a random unused 5-digit number (10000-99999) when not given.
 export async function onRequestPost({ env, request }) {
   const db = env.DB;
   const b = await readBody(request);
@@ -15,6 +15,15 @@ export async function onRequestPost({ env, request }) {
   if (input.length > 500) return bad('Too many runners at once');
   const now = Date.now();
   const stmts = [];
+  const used = new Set((await db.prepare('SELECT bib FROM runners WHERE bib IS NOT NULL').all()).results.map((x) => x.bib));
+  for (const r of input) { const v = cleanBib(r.bib); if (v) used.add(v); }
+  const randomBib = () => {
+    for (let i = 0; i < 1000; i++) {
+      const n = 10000 + Math.floor(Math.random() * 90000);
+      if (!used.has(n)) { used.add(n); return n; }
+    }
+    throw new Error('Could not find a free bib number');
+  };
   for (const r of input) {
     const first = cleanName(r.first_name);
     const last = cleanName(r.last_name).charAt(0).toUpperCase();
@@ -23,20 +32,11 @@ export async function onRequestPost({ env, request }) {
     if (!first) return bad('Every runner needs a first name');
     if (!age) return bad(`Age group for ${first} must be youngster or unc`);
     if (bib === undefined) return bad(`Invalid bib number for ${first}`);
-    if (bib === null) {
-      stmts.push(
-        db
-          .prepare(
-            `INSERT INTO runners (bib, first_name, last_name, age_group, created_at)
-             VALUES ((SELECT COALESCE(MAX(bib), 0) + 1 FROM runners), ?1, ?2, ?3, ?4)`
-          )
-          .bind(first, last, age, now)
-      );
-    } else {
-      stmts.push(
-        db.prepare('INSERT INTO runners (bib, first_name, last_name, age_group, created_at) VALUES (?1, ?2, ?3, ?4, ?5)').bind(bib, first, last, age, now)
-      );
-    }
+    stmts.push(
+      db
+        .prepare('INSERT INTO runners (bib, first_name, last_name, age_group, created_at) VALUES (?1, ?2, ?3, ?4, ?5)')
+        .bind(bib === null ? randomBib() : bib, first, last, age, now)
+    );
   }
   stmts.push(bump(db));
   try {
