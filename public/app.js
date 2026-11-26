@@ -784,7 +784,8 @@ function homeStampHtml(s) {
 
 function renderHome() {
   const stamps = visibleStamps();
-  const mine = stamps.filter((s) => myStampIds.has(s.id));
+  // Once a time has a name it leaves the home screen (fix mistakes from See / Add Runners).
+  const mine = stamps.filter((s) => myStampIds.has(s.id) && s.runner_id == null);
   $('#myStamps').innerHTML = mine.map(homeStampHtml).join('');
   // Unnamed times from other phones, tucked away so nothing gets orphaned.
   const others = stamps.filter((s) => !myStampIds.has(s.id) && s.runner_id == null);
