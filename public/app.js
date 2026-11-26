@@ -412,7 +412,7 @@ function renderClockStatus() {
   document.body.dataset.race = cls;
 }
 
-// --- Hidden gesture on the clock: double-tap, then within 1.5s press & hold 3s.
+// --- Hidden gesture on the clock: double-tap, then within 1.5s press & hold 1.5s.
 // Before the start it opens the start slider; after that it opens race controls (End / Resume / Reset). ---
 (function setupEasterEgg() {
   const el = $('#bigClock');
@@ -420,7 +420,7 @@ function renderClockStatus() {
   const TAP_MAX_MS = 300;
   const DOUBLE_GAP_MS = 400;
   const ARM_WINDOW_MS = 1500;
-  const HOLD_MS = 3000;
+  const HOLD_MS = 1500;
   let downAt = 0;
   let lastTapAt = 0;
   let armedUntil = 0;
